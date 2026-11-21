@@ -12,7 +12,15 @@ import Navbar from './components/Navbar';
 import StatCards from './components/StatCards';
 import TimelineChart from './components/TimelineChart';
 import FilterBar from './components/FilterBar';
-import Slot from './lib/Slot';
+import ThreatLevelBanner from './components/ThreatLevelBanner';
+import AttackTypeChart from './components/AttackTypeChart';
+import MitreChart from './components/MitreChart';
+import LiveFeed from './components/LiveFeed';
+import AttackMap from './components/AttackMap';
+import TopAttackers from './components/TopAttackers';
+import ReportButton from './components/ReportButton';
+import AboutPanel from './components/AboutPanel';
+import EventDetailModal from './components/EventDetailModal';
 
 export default function App() {
   const [useMock, setUseMock] = useState(USE_MOCK);
@@ -78,7 +86,7 @@ export default function App() {
           </div>
         )}
 
-        <Slot name="ThreatLevelBanner" level={stats.data?.threat_level} />
+        <ThreatLevelBanner level={stats.data?.threat_level} />
         <StatCards stats={stats.data} loading={stats.loading} />
         <FilterBar filters={filters} onChange={setFilters} />
 
@@ -86,12 +94,11 @@ export default function App() {
           <div className="col">
             <TimelineChart points={timeline.data?.points} loading={timeline.loading} />
             <div className="grid grid-2">
-              <Slot name="AttackTypeChart" byType={stats.data?.by_type} />
-              <Slot name="MitreChart" items={mitre.data?.items} />
+              <AttackTypeChart byType={stats.data?.by_type} />
+              <MitreChart items={mitre.data?.items} />
             </div>
           </div>
-          <Slot
-            name="LiveFeed"
+          <LiveFeed
             events={events.data?.events}
             onSelect={setSelected}
             loading={events.loading}
@@ -100,22 +107,22 @@ export default function App() {
         </div>
 
         <div className="grid grid-2">
-          <Slot name="AttackMap" points={geo.data?.points} />
-          <Slot name="TopAttackers" attackers={attackers.data?.attackers} />
+          <AttackMap points={geo.data?.points} />
+          <TopAttackers attackers={attackers.data?.attackers} />
         </div>
 
         {reportIp && (
           <div className="row">
             <span className="muted">Incident report for {reportIp}:</span>
-            <Slot name="ReportButton" ip={reportIp} />
+            <ReportButton ip={reportIp} />
           </div>
         )}
 
-        <Slot name="AboutPanel" />
+        <AboutPanel />
       </div>
 
       {selected && (
-        <Slot name="EventDetailModal" silent event={selected} onClose={() => setSelected(null)} />
+        <EventDetailModal event={selected} onClose={() => setSelected(null)} />
       )}
     </div>
   );
