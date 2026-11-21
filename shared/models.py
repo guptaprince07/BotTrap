@@ -54,3 +54,26 @@ class ClassificationCache(Base):
     payload_hash = Column(String(64), primary_key=True)
 
     result_json = Column(Text)
+
+
+from datetime import datetime
+from sqlalchemy import Column, DateTime, Integer, String
+
+
+class HoneyToken(Base):
+    __tablename__ = "honey_tokens"
+
+    id = Column(Integer, primary_key=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    token = Column(String(64), unique=True, index=True)
+    kind = Column(String(16))  # api_key | password
+    issued_to_ip = Column(String(64), index=True)
+    issued_on_path = Column(String(512))  # /.env, /api/v1/config, ...
+    issued_user_agent = Column(String(512))
+    status = Column(String(8), default="issued", index=True)  # issued | used
+    used_count = Column(Integer, default=0)
+    first_used_at = Column(DateTime)
+    last_used_at = Column(DateTime)
+    used_by_ip = Column(String(64))
+    used_on_path = Column(String(512))
+    seconds_to_use = Column(Integer)  # first_used_at - created_at
