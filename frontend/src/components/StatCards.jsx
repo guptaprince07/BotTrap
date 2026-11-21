@@ -44,3 +44,9 @@ export default function StatCards({ stats, loading }) {
     </div>
   );
 }
+
+{/* Inside your StatCards grid */}
+<div className="stat-card">
+  <span className="stat-label">LLM calls saved</span>
+  <strong className="stat-value">{rulesStats?.llm_calls_saved ?? 0}</strong>
+</div>
