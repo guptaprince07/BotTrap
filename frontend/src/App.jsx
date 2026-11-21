@@ -25,41 +25,11 @@ import {
   ArrowUpRight,
   Radio,
 } from 'lucide-react';
+import { SEVERITY_META, COLORS, PIE_COLORS } from './theme.js';
 
 // ============================================================================
 // DESIGN TOKENS & CONSTANTS ("Dark Chromatic" Precision Engineering System)
 // ============================================================================
-
-const SEVERITY_META = {
-  CRITICAL: {
-    label: 'CRITICAL',
-    color: '#E5484D',
-    bg: 'rgba(229, 72, 77, 0.10)',
-    border: 'rgba(229, 72, 77, 0.30)',
-    weight: 4,
-  },
-  HIGH: {
-    label: 'HIGH',
-    color: '#F76B15',
-    bg: 'rgba(247, 107, 21, 0.10)',
-    border: 'rgba(247, 107, 21, 0.28)',
-    weight: 3,
-  },
-  MEDIUM: {
-    label: 'MEDIUM',
-    color: '#E5A93C',
-    bg: 'rgba(229, 169, 60, 0.10)',
-    border: 'rgba(229, 169, 60, 0.28)',
-    weight: 2,
-  },
-  LOW: {
-    label: 'LOW',
-    color: '#3B82F6',
-    bg: 'rgba(59, 130, 246, 0.10)',
-    border: 'rgba(59, 130, 246, 0.28)',
-    weight: 1,
-  },
-};
 
 const ATTACK_TYPES = [
   'SQL Injection',

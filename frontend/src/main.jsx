@@ -1,7 +1,9 @@
 // frontend/src/main.jsx
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import './styles/theme.css';
 import 'leaflet/dist/leaflet.css';
+
 import App from './App.jsx';
 
 createRoot(document.getElementById('root')).render(
