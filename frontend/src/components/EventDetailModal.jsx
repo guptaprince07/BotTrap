@@ -106,3 +106,6 @@ export default function EventDetailModal({ event, onClose }) {
     </div>
   );
 }
+{event?.source === "dynamic" && (
+  <span className="badge learned-rule-badge">Learned rule</span>
+)}
