@@ -14,45 +14,69 @@ import TimelineChart from './components/TimelineChart';
 import FilterBar from './components/FilterBar';
 import Slot from './lib/Slot';
 
-// Real API call, or mock data when VITE_USE_MOCK=true
-const get = (path, mockFn) => () => (USE_MOCK ? Promise.resolve(mockFn()) : api(path));
-
 export default function App() {
+  const [useMock, setUseMock] = useState(USE_MOCK);
   const [filters, setFilters] = useState({ severity: '', attack_type: '' });
   const [selected, setSelected] = useState(null); // event shown in the detail modal
+
+  // Real API call, or mock data when useMock is true
+  const get = (path, mockFn) => () => (useMock ? Promise.resolve(mockFn()) : api(path));
 
   // Build events URL from the active filters
   const qs = new URLSearchParams({ limit: '50' });
   if (filters.severity) qs.set('severity', filters.severity);
   if (filters.attack_type) qs.set('attack_type', filters.attack_type);
 
-  const stats = usePolling(get('/api/stats', mockStats), 3000);
+  const stats = usePolling(get('/api/stats', mockStats), 3000, [useMock]);
   const events = usePolling(
     get('/api/events?' + qs.toString(), () => mockEvents(filters)),
     3000,
-    [filters.severity, filters.attack_type] // refresh immediately when a filter changes
+    [useMock, filters.severity, filters.attack_type] // refresh immediately when a filter or mock mode changes
   );
-  const timeline = usePolling(get('/api/timeline?minutes=60&bucket=2', mockTimeline), 3000);
-  const mitre = usePolling(get('/api/mitre', mockMitre), 5000);
-  const geo = usePolling(get('/api/geo', mockGeo), 5000);
-  const attackers = usePolling(get('/api/attackers?limit=10', mockAttackers), 5000);
+  const timeline = usePolling(get('/api/timeline?minutes=60&bucket=2', mockTimeline), 3000, [useMock]);
+  const mitre = usePolling(get('/api/mitre', mockMitre), 5000, [useMock]);
+  const geo = usePolling(get('/api/geo', mockGeo), 5000, [useMock]);
+  const attackers = usePolling(get('/api/attackers?limit=10', mockAttackers), 5000, [useMock]);
 
   // IP used by the incident-report button: selected event first, else top attacker
   const reportIp = (selected && selected.ip) || attackers.data?.attackers?.[0]?.ip;
 
-  // API down = the stats request is failing (and we have no cached data)
-  const apiDown = !USE_MOCK && stats.error && !stats.data;
+  // API down = the stats request is currently failing in live mode
+  const apiDown = !useMock && !!stats.error;
 
   return (
     <div className="app-shell">
-      <Navbar />
+      <Navbar useMock={useMock} onToggleMock={setUseMock} />
       <div className="container col">
         {apiDown && (
-          <div className="error-state">
-            Cannot reach the dashboard API ({stats.error}). Retrying every 3 seconds...
+          <div className="error-state row-between">
+            <div>
+              <strong>Cannot reach the Dashboard API:</strong> {stats.error}.<br />
+              Make sure <code className="mono">python -m api.app</code> is running in a terminal on port 5001.
+            </div>
+            <button
+              type="button"
+              className="btn btn-ghost"
+              style={{ whiteSpace: 'nowrap' }}
+              onClick={() => setUseMock(true)}
+            >
+              Use Demo Mock Data
+            </button>
           </div>
         )}
-        {USE_MOCK && <div className="muted">Demo mode: showing mock data.</div>}
+        {useMock && (
+          <div className="banner banner-medium row-between">
+            <span>Demo Mock Mode: Showing static sample data (6 events). Real attacks require Live API mode.</span>
+            <button
+              type="button"
+              className="btn"
+              style={{ padding: '4px 10px', fontSize: '12px' }}
+              onClick={() => setUseMock(false)}
+            >
+              Switch to Live API
+            </button>
+          </div>
+        )}
 
         <Slot name="ThreatLevelBanner" level={stats.data?.threat_level} />
         <StatCards stats={stats.data} loading={stats.loading} />

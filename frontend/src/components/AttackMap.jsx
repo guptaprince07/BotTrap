@@ -28,8 +28,8 @@ export default function AttackMap({ points: propPoints, loading = false, error =
             style={{ height: '100%', width: '100%', background: '#0b1220' }}
           >
             <TileLayer
-              attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
             {points.map((pt, idx) => {
               if (pt.lat == null || pt.lon == null) return null;
@@ -48,8 +48,8 @@ export default function AttackMap({ points: propPoints, loading = false, error =
                   }}
                 >
                   <Popup className="dark-popup">
-                    <div style={{ color: '#0b1220', fontSize: '12px', lineHeight: 1.4 }}>
-                      <strong>IP:</strong> {pt.ip}
+                    <div style={{ fontSize: '12px', lineHeight: 1.4 }}>
+                      <strong>IP:</strong> <span className="mono">{pt.ip}</span>
                       <br />
                       <strong>Country:</strong> {pt.country || 'Unknown'}
                       <br />

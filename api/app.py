@@ -10,8 +10,16 @@ from shared.db import init_db, query_events, get_event
 
 app = Flask(__name__)
 
-# Allow requests from our React frontend
-CORS(app, origins=[ALLOWED_ORIGIN])
+# Allow requests from React frontend (supports localhost, 127.0.0.1, or any origin)
+CORS(app, resources={r"/*": {"origins": "*"}})
+
+
+@app.after_request
+def _disable_caching(response):
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 
 def get_all_events():

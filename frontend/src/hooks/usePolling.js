@@ -1,28 +1,34 @@
 // frontend/src/hooks/usePolling.js
 // Calls fn() immediately, then every `ms` milliseconds.
-// Pass `deps` (e.g. [filters.severity, filters.attack_type]) so it
-// re-fetches right away when those values change.
-import { useEffect, useState } from 'react';
+// Uses useRef to avoid stale closures and always invoke the freshest function.
+import { useEffect, useState, useRef } from 'react';
 
 export default function usePolling(fn, ms = 3000, deps = []) {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const fnRef = useRef(fn);
+  fnRef.current = fn;
+
   useEffect(() => {
-    let alive = true; // stops state updates after unmount or deps change
+    let alive = true;
 
     const run = async () => {
       try {
-        const d = await fn();
+        const d = await fnRef.current();
         if (alive) {
           setData(d);
           setError(null);
         }
       } catch (e) {
-        if (alive) setError(e.message);
+        if (alive) {
+          setError(e.message || 'Network request failed');
+        }
       } finally {
-        if (alive) setLoading(false);
+        if (alive) {
+          setLoading(false);
+        }
       }
     };
 
