@@ -131,7 +131,7 @@ def run_simulation(target: str, rate: float) -> None:
     delay = 1.0 / max(rate, 0.1)
     queue = build_attack_queue()
 
-    print(f"[*] Starting HoneyLens Attack Simulator -> {target}")
+    print(f"[*] Starting BotTrap Attack Simulator -> {target}")
     print(f"[*] Sending {len(queue)} simulated attacks at ~{rate:.1f} req/s...\n")
 
     sent = 0
@@ -166,11 +166,11 @@ def run_simulation(target: str, rate: float) -> None:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="HoneyLens Attack Traffic Simulator")
+    parser = argparse.ArgumentParser(description="BotTrap Attack Traffic Simulator")
     parser.add_argument(
         "--target",
         default="http://localhost:5000",
-        help="Base URL of the HoneyLens honeypot (default: http://localhost:5000)",
+        help="Base URL of the BotTrap honeypot (default: http://localhost:5000)",
     )
     parser.add_argument(
         "--rate",

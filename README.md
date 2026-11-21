@@ -1,4 +1,4 @@
-# HoneyLens
+# BotTrap
 
 AI-powered honeypot. A fake admin portal and fake API attract bots; every request is captured, classified (rules first, then LLM), mapped to MITRE ATT&CK with a recommended defense rule, and shown on a live dashboard.
 

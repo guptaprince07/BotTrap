@@ -9,7 +9,7 @@ from api import geo as geo_service
 from pipeline.rules import classify_by_rules
 from shared import db
 
-logger = logging.getLogger("honeylens.pipeline")
+logger = logging.getLogger("bottrap.pipeline")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 
 _worker_thread: threading.Thread | None = None
@@ -97,7 +97,7 @@ def start() -> None:
         return
 
     _stop_event.clear()
-    _worker_thread = threading.Thread(target=_worker_loop, name="honeylens-pipeline-worker", daemon=True)
+    _worker_thread = threading.Thread(target=_worker_loop, name="bottrap-pipeline-worker", daemon=True)
     _worker_thread.start()
 
 

@@ -2,7 +2,7 @@
 export default function Navbar({ useMock, onToggleMock }) {
   return (
     <nav className="navbar">
-      <div className="brand">🍯 HoneyLens</div>
+      <div className="brand">🍯 BotTrap</div>
       <div className="row">
         {useMock ? (
           <div className="row">

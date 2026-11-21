@@ -1,2 +1,2 @@
 """Pipeline package."""
-"""HoneyLens classification pipeline package."""
+"""BotTrap classification pipeline package."""

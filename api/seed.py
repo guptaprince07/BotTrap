@@ -1,4 +1,4 @@
-"""Insert fictional demo events into the HoneyLens database."""
+"""Insert fictional demo events into the BotTrap database."""
 
 import hashlib
 import json
@@ -132,10 +132,10 @@ def seed_database():
             "path": path,
             "query": "",
             "headers": json.dumps({
-                "User-Agent": "HoneyLens-Demo/1.0"
+                "User-Agent": "BotTrap-Demo/1.0"
             }),
             "body": body,
-            "user_agent": "HoneyLens-Demo/1.0",
+            "user_agent": "BotTrap-Demo/1.0",
             "payload_hash": payload_hash,
         }
 

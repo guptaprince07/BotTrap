@@ -19,7 +19,7 @@ export default function AboutPanel() {
           </div>
         ))}
         <div className="muted">
-          Honest note: HoneyLens is a research and awareness tool. It is an early-warning system, not a replacement for a firewall.
+          Honest note: BotTrap is a research and awareness tool. It is an early-warning system, not a replacement for a firewall.
         </div>
       </div>
     </div>

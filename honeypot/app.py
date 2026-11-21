@@ -1,4 +1,4 @@
-"""HoneyLens honeypot (public). Pretends to be an admin portal + API.
+"""BotTrap honeypot (public). Pretends to be an admin portal + API.
 
 Safety: never executes, evaluates or reflects input. Every request is logged
 to the DB with status=pending; the pipeline worker classifies it later.
