@@ -1,59 +1,49 @@
-import { useEffect, useState } from "react";
+import React from 'react';
 
-export default function TopAttackers() {
-  const [attackers, setAttackers] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchAttackers = async () => {
-      try {
-        const API = import.meta.env.VITE_API_URL || "http://localhost:5001";
-
-        const response = await fetch(`${API}/api/attackers?limit=10`);
-        const data = await response.json();
-
-        setAttackers(data.attackers || []);
-      } catch (error) {
-        console.error("Error loading attackers:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAttackers();
-
-    const interval = setInterval(fetchAttackers, 10000);
-
-    return () => clearInterval(interval);
-  }, []);
+export default function TopAttackers({ attackers: propAttackers, loading = false, error = null }) {
+  const attackers = propAttackers || [];
 
   return (
-    <div style={{ padding: "15px" }}>
-      <h3>Top Attackers</h3>
+    <div className="card">
+      <div className="row-between mb-4">
+        <div className="card-title" style={{ marginBottom: 0 }}>
+          TOP ATTACKERS
+        </div>
+        <span className="muted mono">{attackers.length} identified</span>
+      </div>
 
-      {loading ? (
-        <p>Loading attackers...</p>
+      {error ? (
+        <div className="error-state">Failed to load top attackers: {error}</div>
+      ) : loading && attackers.length === 0 ? (
+        <div className="col">
+          <div className="skeleton" style={{ height: '36px' }} />
+          <div className="skeleton" style={{ height: '36px' }} />
+          <div className="skeleton" style={{ height: '36px' }} />
+        </div>
       ) : attackers.length === 0 ? (
-        <p>No attackers found.</p>
+        <div className="empty-state">No attackers recorded yet.</div>
       ) : (
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <div className="card-scroll" style={{ maxHeight: '340px' }}>
+          <table className="table">
             <thead>
               <tr>
-                <th style={cellStyle}>IP Address</th>
-                <th style={cellStyle}>Country</th>
-                <th style={cellStyle}>Events</th>
-                <th style={cellStyle}>Top Attack</th>
+                <th>IP Address</th>
+                <th>Country</th>
+                <th>Events</th>
+                <th>Top Attack</th>
               </tr>
             </thead>
-
             <tbody>
-              {attackers.map((attacker, index) => (
-                <tr key={attacker.ip || index}>
-                  <td style={cellStyle}>{attacker.ip}</td>
-                  <td style={cellStyle}>{attacker.country || "Unknown"}</td>
-                  <td style={cellStyle}>{attacker.count}</td>
-                  <td style={cellStyle}>{attacker.top_type}</td>
+              {attackers.map((att, idx) => (
+                <tr key={att.ip || idx}>
+                  <td className="mono">{att.ip}</td>
+                  <td>{att.country || 'Unknown'}</td>
+                  <td>
+                    <strong>{att.count}</strong>
+                  </td>
+                  <td>
+                    <span className="badge badge-high">{att.top_type || 'Unknown'}</span>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -63,9 +53,3 @@ export default function TopAttackers() {
     </div>
   );
 }
-
-const cellStyle = {
-  padding: "10px",
-  borderBottom: "1px solid #ddd",
-  textAlign: "left",
-};
