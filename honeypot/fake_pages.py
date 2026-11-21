@@ -1,5 +1,7 @@
-"""Static fake responses. Everything here is invented; no real data or credentials.
+"""Fake responses. Everything here is invented; no real data or credentials.
 None of these pages ever includes request input (no reflection)."""
+
+from honeypot.tokens import token_for
 
 LOGIN_HTML = """<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><title>Administrator Login</title>
@@ -36,6 +38,7 @@ NOT_FOUND_HTML = """<html>
 <body><center><h1>404 Not Found</h1></center><hr><center>nginx</center></body>
 </html>"""
 
+# Static fallbacks kept intact so existing imports do not break during migration
 FAKE_USERS = {
     "users": [
         {"id": 1, "username": "admin", "email": "admin@example.test", "role": "administrator"},
@@ -85,3 +88,65 @@ Disallow: /backup
 Disallow: /.git/
 Disallow: /api/v1/config
 """
+
+
+# --- Per-visitor honey-token page generators ---
+
+def fake_users(ip: str, ua: str = "") -> dict:
+    return {
+        "users": [
+            {
+                "id": 1,
+                "username": "admin",
+                "email": "admin@example.test",
+                "role": "administrator",
+                "api_token": token_for(ip, "/api/v1/users", "api_key", ua),
+            },
+            {"id": 2, "username": "jdoe", "email": "jdoe@example.test", "role": "editor"},
+            {"id": 3, "username": "svc_backup", "email": "backup@example.test", "role": "service"},
+        ],
+        "total": 3,
+    }
+
+
+def fake_config(ip: str, ua: str = "") -> dict:
+    return {
+        "app": "internal-portal",
+        "version": "2.4.1",
+        "debug": True,
+        "db_host": "db.internal.example.test",
+        "api_key": token_for(ip, "/api/v1/config", "api_key", ua),
+    }
+
+
+def fake_env(ip: str, ua: str = "") -> str:
+    return (
+        "APP_ENV=production\n"
+        "APP_DEBUG=false\n"
+        "APP_KEY=base64:FAKEFAKEFAKEFAKEFAKEFAKEFAKEFAKEFAKEFAKE0=\n"
+        "DB_CONNECTION=mysql\n"
+        "DB_HOST=10.0.0.5\n"
+        "DB_PORT=3306\n"
+        "DB_DATABASE=portal\n"
+        "DB_USERNAME=portal_user\n"
+        f"DB_PASSWORD={token_for(ip, '/.env', 'password', ua)}\n"
+        f"ADMIN_KEY={token_for(ip, '/.env', 'api_key', ua)}\n"
+        "AWS_ACCESS_KEY_ID=AKIAFAKEFAKEFAKE0000\n"
+        "AWS_SECRET_ACCESS_KEY=fakefakefakefakefakefakefakefakefake0000\n"
+    )
+
+
+def fake_git_config(ip: str, ua: str = "") -> str:
+    git_password = token_for(ip, "/.git/config", "password", ua)
+    return (
+        "[core]\n"
+        "\trepositoryformatversion = 0\n"
+        "\tfilemode = true\n"
+        "\tbare = false\n"
+        '[remote "origin"]\n'
+        f"\turl = https://deploy:{git_password}@git.example.test/internal/portal.git\n"
+        "\tfetch = +refs/heads/*:refs/remotes/origin/*\n"
+        '[branch "main"]\n'
+        "\tremote = origin\n"
+        "\tmerge = refs/heads/main\n"
+    )
