@@ -1,3 +1,4 @@
+
 """Background pipeline worker skeleton."""
 import logging
 import os
@@ -106,3 +107,76 @@ def stop() -> None:
     _stop_event.set()
     if _worker_thread is not None:
         _worker_thread.join(timeout=5.0)
+import logging
+import os
+import time
+from pipeline.rules import (
+    classify as classify_static,
+    load_active_rules,
+    load_benign_samples,
+    match_dynamic,
+    pick_text,
+    validate_suggested_regex,
+)
+from shared.db import add_dynamic_rule
+
+log = logging.getLogger(__name__)
+
+AUTO_APPROVE_RULES = os.getenv("AUTO_APPROVE_RULES", "false").strip().lower() == "true"
+REFRESH_SECONDS = float(os.getenv("DYNAMIC_RULES_REFRESH_SECONDS", "10"))
+BENIGN_SAMPLES = load_benign_samples()
+
+
+def propose_rule(event: dict, result: dict) -> None:
+    pattern = result.get("suggested_regex")
+    if not pattern or result.get("source") != "llm" or result.get("attack_type") == "Other":
+        return
+
+    target = result.get("regex_target") or "any"
+    ok, reason = validate_suggested_regex(pattern, pick_text(event, target), BENIGN_SAMPLES)
+    if not ok:
+        log.info("dynamic rule rejected (%s): %s", reason, pattern)
+        return
+
+    status = "active" if AUTO_APPROVE_RULES else "pending_review"
+    rule_id = add_dynamic_rule({
+        "pattern": pattern,
+        "target": target,
+        "status": status,
+        "attack_type": result.get("attack_type"),
+        "severity": result.get("severity"),
+        "mitre_id": result.get("mitre_id"),
+        "mitre_name": result.get("mitre_name"),
+        "explanation": result.get("explanation"),
+        "recommended_rule": result.get("recommended_rule"),
+        "source_event_id": event.get("id"),
+    })
+    if rule_id is not None:
+        log.info("proposed dynamic rule #%s (%s): %s", rule_id, status, pattern)
+
+
+def run_worker_loop(fetch_pending, cache_lookup, llm_classify, update_classification):
+    active_rules = load_active_rules()
+    last_refresh = time.monotonic()
+
+    while True:
+        now = time.monotonic()
+        if now - last_refresh >= REFRESH_SECONDS:
+            active_rules = load_active_rules()
+            last_refresh = now
+
+        events = fetch_pending()
+        for event in events:
+            result = classify_static(event)
+            if not result:
+                result = match_dynamic(event, active_rules)
+            if not result:
+                result = cache_lookup(event)
+            if not result:
+                result = llm_classify(event)
+                propose_rule(event, result)
+
+            update_classification(event["id"], result)
+
+        if not events:
+            time.sleep(0.5)
