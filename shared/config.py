@@ -5,7 +5,7 @@ load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///honeylens.db")
 
-API_PORT = int(os.getenv("API_PORT", 5001))
+API_PORT = int(os.getenv("PORT", os.getenv("API_PORT", 5001)))
 
 ALLOWED_ORIGIN = os.getenv("ALLOWED_ORIGIN", "http://localhost:5173")
 

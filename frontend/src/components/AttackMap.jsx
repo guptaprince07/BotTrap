@@ -1,66 +1,67 @@
-import { useEffect, useState } from "react";
-import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
+import React from 'react';
+import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import { COLORS } from '../theme';
 
-export default function AttackMap() {
-  const [points, setPoints] = useState([]);
-
-  useEffect(() => {
-    const fetchLocations = async () => {
-      try {
-        const API = import.meta.env.VITE_API_URL || "http://localhost:5001";
-
-        const response = await fetch(`${API}/api/geo`);
-        const data = await response.json();
-
-        setPoints(data.points || []);
-      } catch (error) {
-        console.error("Error loading attack locations:", error);
-      }
-    };
-
-    fetchLocations();
-
-    const interval = setInterval(fetchLocations, 10000);
-
-    return () => clearInterval(interval);
-  }, []);
+export default function AttackMap({ points: propPoints, loading = false, error = null }) {
+  const points = propPoints || [];
 
   return (
-    <div style={{ width: "100%", height: "400px" }}>
-      <h3>Attack Map</h3>
+    <div className="card">
+      <div className="row-between mb-4">
+        <div className="card-title" style={{ marginBottom: 0 }}>
+          LIVE ATTACK MAP
+        </div>
+        <span className="muted mono">{points.length} locations</span>
+      </div>
 
-      <MapContainer
-        center={[25, 0]}
-        zoom={2}
-        style={{ height: "350px", width: "100%" }}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-
-        {points.map((point, index) => (
-          <CircleMarker
-            key={index}
-            center={[point.lat, point.lon]}
-            radius={Math.min(6 + point.count, 18)}
-            pathOptions={{
-              color: "red",
-              fillColor: "red",
-              fillOpacity: 0.6,
-            }}
+      {error ? (
+        <div className="error-state">Failed to load geographic points: {error}</div>
+      ) : loading && points.length === 0 ? (
+        <div className="map-box skeleton" />
+      ) : (
+        <div className="map-box">
+          <MapContainer
+            center={[20, 0]}
+            zoom={2}
+            scrollWheelZoom={false}
+            style={{ height: '100%', width: '100%', background: '#0b1220' }}
           >
-            <Popup>
-              <b>IP:</b> {point.ip}
-              <br />
-              <b>Country:</b> {point.country}
-              <br />
-              <b>Events:</b> {point.count}
-            </Popup>
-          </CircleMarker>
-        ))}
-      </MapContainer>
+            <TileLayer
+              attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+            />
+            {points.map((pt, idx) => {
+              if (pt.lat == null || pt.lon == null) return null;
+              const count = pt.count || 1;
+              const radius = Math.min(5 + count * 1.5, 18);
+              return (
+                <CircleMarker
+                  key={`${pt.ip}-${idx}`}
+                  center={[pt.lat, pt.lon]}
+                  radius={radius}
+                  pathOptions={{
+                    color: COLORS.severity.Critical,
+                    fillColor: COLORS.severity.Critical,
+                    fillOpacity: 0.65,
+                    weight: 1.5,
+                  }}
+                >
+                  <Popup className="dark-popup">
+                    <div style={{ color: '#0b1220', fontSize: '12px', lineHeight: 1.4 }}>
+                      <strong>IP:</strong> {pt.ip}
+                      <br />
+                      <strong>Country:</strong> {pt.country || 'Unknown'}
+                      <br />
+                      <strong>Events:</strong> {count}
+                    </div>
+                  </Popup>
+                </CircleMarker>
+              );
+            })}
+          </MapContainer>
+        </div>
+      )}
     </div>
   );
 }

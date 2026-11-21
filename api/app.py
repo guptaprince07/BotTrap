@@ -296,26 +296,30 @@ def report():
             "report": "No events found for this IP address."
         })
 
-    types = Counter(
-        event["attack_type"]
-        for event in events
-        if event.get("attack_type")
-    )
+    try:
+        from ai.llm_client import generate_report
+        report_text = generate_report(events)
+    except Exception as exc:
+        types = Counter(
+            event["attack_type"]
+            for event in events
+            if event.get("attack_type")
+        )
 
-    severities = Counter(
-        event["severity"]
-        for event in events
-        if event.get("severity")
-    )
+        severities = Counter(
+            event["severity"]
+            for event in events
+            if event.get("severity")
+        )
 
-    report_text = (
-        f"Incident Report for IP: {ip}\n"
-        f"Total events: {len(events)}\n"
-        f"Attack types: {dict(types)}\n"
-        f"Severity distribution: {dict(severities)}\n"
-        f"Country: {next((e.get('country') for e in events if e.get('country')), 'Unknown')}\n"
-        f"Latest event: {events[0].get('created_at')}\n"
-    )
+        report_text = (
+            f"Incident Report for IP: {ip}\n"
+            f"Total events: {len(events)}\n"
+            f"Attack types: {dict(types)}\n"
+            f"Severity distribution: {dict(severities)}\n"
+            f"Country: {next((e.get('country') for e in events if e.get('country')), 'Unknown')}\n"
+            f"Latest event: {events[0].get('created_at')}\n"
+        )
 
     return jsonify({
         "ip": ip,
@@ -323,21 +327,24 @@ def report():
     })
 
 
-# Start the API
-if __name__ == "__main__":
-    init_db()
+def _bootstrap():
+    """Ensure DB tables exist and background worker starts under WSGI/Gunicorn and CLI."""
+    try:
+        init_db()
+    except Exception as exc:
+        print(f"[api] init_db warning: {exc}")
 
-    # Start the pipeline worker if its start function is available.
     if RUN_WORKER:
         try:
             from pipeline import worker
-
             if hasattr(worker, "start"):
                 worker.start()
-            else:
-                print("Worker start() is not available yet.")
+        except Exception as exc:
+            print(f"[api] pipeline worker start warning: {exc}")
 
-        except ImportError:
-            print("Pipeline worker is not ready yet.")
 
+_bootstrap()
+
+# Start the API
+if __name__ == "__main__":
     app.run(host="0.0.0.0", port=API_PORT, debug=False)
