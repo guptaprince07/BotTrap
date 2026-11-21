@@ -61,7 +61,7 @@ const HONEYPOT_NODE = {
 };
 
 // ============================================================================
-// MOCK HONEY-TOKENS DATA (used when VITE_USE_MOCK=true)
+// REALISTIC THREAT INTELLIGENCE SEED DATA & GENERATOR
 // ============================================================================
 
 const THREAT_ACTORS = [
@@ -264,16 +264,8 @@ const ATTACK_TEMPLATES = [
   },
 ];
 
-const MOCK_TOKEN_STATS = {
-  issued: 12,
-  used: 2,
-  readers: 9,
-  avg_seconds_to_use: 87,
-  last_used_at: new Date(MOCK_NOW - 2 * 60 * 1000).toISOString(),
-};
-
 // ============================================================================
-// POLLING HOOK (supports real API and VITE_USE_MOCK=true)
+// UTILITY FUNCTIONS
 // ============================================================================
 
 function formatTimeHMS(iso) {
