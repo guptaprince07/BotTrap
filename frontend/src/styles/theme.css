@@ -1,25 +1,32 @@
-/* ============ BotTrap shared theme ============ */
+/* ============ SatHack & BotTrap shared theme ============ */
 :root {
-  /* colors */
-  --bg: #0b1220;
-  --surface: #121a2b;
-  --surface-2: #1a2438;
-  --border: #25314b;
-  --text: #e6ecf5;
-  --muted: #8a97b1;
-  --accent: #22d3ee;
-  --accent-2: #8b5cf6;
+  /* Dark Chromatic System Colors */
+  --bg: #08090B;
+  --surface: #0E1014;
+  --surface-2: #14171D;
+  --border: #1E232C;
+  --border-focus: #2E3543;
+  --text: #F0F2F5;
+  --muted: #8A93A2;
+  --subtle: #525B6A;
+  --accent: #3B82F6;
+  --accent-2: #14B8A6;
+  --accent-purple: #8B5CF6;
+
   /* severity */
-  --sev-low: #34d399;
-  --sev-medium: #fbbf24;
-  --sev-high: #fb923c;
-  --sev-critical: #f43f5e;
+  --sev-low: #3B82F6;
+  --sev-medium: #E5A93C;
+  --sev-high: #F76B15;
+  --sev-critical: #E5484D;
+  --sev-success: #2EB872;
+
   /* spacing, radius, shadow */
   --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px;
-  --radius: 12px;
-  --radius-sm: 8px;
-  --shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
-  /* type */
+  --radius: 4px;
+  --radius-sm: 4px;
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+
+  /* typography */
   --font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', Consolas, monospace;
 }
