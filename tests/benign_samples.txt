@@ -1,0 +1,15 @@
+GET /
+GET /index.html
+GET /about
+GET /products
+GET /search?q=shoes
+GET /search?q=laptop+stand
+GET /items?page=2&sort=asc
+POST /login username=john&password=hello123
+POST /contact name=Jane&email=jane@example.com
+POST /api/cart item_id=42&qty=1
+Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0.0.0 Safari/537.36
+Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4) AppleWebKit/605.1.15 Version/17.4 Safari/605.1.15
+curl/8.7.1
+GET /healthz
+GET /static/app.js

