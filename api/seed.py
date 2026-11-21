@@ -63,3 +63,19 @@ def seed_honey_tokens():
         )
         db.add(event)
         db.commit()
+from shared.db import add_dynamic_rule
+
+
+def seed_dynamic_rules():
+    add_dynamic_rule({
+        "pattern": r"\$\{jndi:(ldap|rmi|dns)",
+        "target": "user_agent",
+        "attack_type": "Command Injection",
+        "severity": "Critical",
+        "mitre_id": "T1190",
+        "mitre_name": "Exploit Public-Facing Application",
+        "explanation": "JNDI lookup string attempts to trigger remote class loading.",
+        "recommended_rule": 'if ($http_user_agent ~* "\\$\\{jndi:") { return 403; }',
+        "status": "pending_review",
+        "source_event_id": None,
+    })
