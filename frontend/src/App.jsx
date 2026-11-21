@@ -449,9 +449,6 @@ function Navbar({
             <span className="font-semibold tracking-[0.14em] text-sm text-[#F0F2F5]">
               BOTTRAP
             </span>
-            <span className="hidden sm:inline-flex items-center px-2 py-0.5 text-[10px] font-mono tracking-wider text-[#8A93A2] bg-[#0E1014] border border-[#1E232C] rounded-[4px]">
-              HONEYPOT TELEMETRY v2.4
-            </span>
           </div>
         </div>
 
