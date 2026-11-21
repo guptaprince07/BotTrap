@@ -421,3 +421,104 @@ def token_stats() -> dict:
             "avg_seconds_to_use": int(round(avg_secs)) if avg_secs is not None else 0,
             "last_used_at": _iso_utc(last_used),
         }
+
+from datetime import datetime
+from sqlalchemy import func
+from shared.models import DynamicRule
+
+
+def _rule_to_dict(rule: DynamicRule) -> dict:
+    return {
+        "id": rule.id,
+        "created_at": rule.created_at.isoformat() if rule.created_at else None,
+        "pattern": rule.pattern,
+        "target": rule.target,
+        "attack_type": rule.attack_type,
+        "severity": rule.severity,
+        "mitre_id": rule.mitre_id,
+        "mitre_name": rule.mitre_name,
+        "explanation": rule.explanation,
+        "recommended_rule": rule.recommended_rule,
+        "status": rule.status,
+        "source_event_id": rule.source_event_id,
+        "hit_count": rule.hit_count or 0,
+        "last_hit_at": rule.last_hit_at.isoformat() if rule.last_hit_at else None,
+    }
+
+
+def add_dynamic_rule(rule: dict) -> int | None:
+    """Insert a rule; return its id, or None if pattern already exists."""
+    with get_session() as db:
+        existing = db.query(DynamicRule).filter(DynamicRule.pattern == rule["pattern"]).first()
+        if existing:
+            return None
+        obj = DynamicRule(
+            pattern=rule["pattern"],
+            target=rule.get("target", "any"),
+            attack_type=rule.get("attack_type"),
+            severity=rule.get("severity"),
+            mitre_id=rule.get("mitre_id"),
+            mitre_name=rule.get("mitre_name"),
+            explanation=rule.get("explanation"),
+            recommended_rule=rule.get("recommended_rule"),
+            status=rule.get("status", "pending_review"),
+            source_event_id=rule.get("source_event_id"),
+        )
+        db.add(obj)
+        db.commit()
+        db.refresh(obj)
+        return obj.id
+
+
+def list_dynamic_rules(status: str | None = None) -> list[dict]:
+    with get_session() as db:
+        q = db.query(DynamicRule)
+        if status:
+            q = q.filter(DynamicRule.status == status)
+        rows = q.order_by(DynamicRule.created_at.desc(), DynamicRule.id.desc()).all()
+        return [_rule_to_dict(r) for r in rows]
+
+
+def set_rule_status(rule_id: int, status: str) -> bool:
+    if status not in {"pending_review", "active", "rejected", "disabled"}:
+        return False
+    with get_session() as db:
+        rule = db.query(DynamicRule).filter(DynamicRule.id == rule_id).first()
+        if not rule:
+            return False
+        rule.status = status
+        db.commit()
+        return True
+
+
+def record_rule_hit(rule_id: int) -> None:
+    with get_session() as db:
+        rule = db.query(DynamicRule).filter(DynamicRule.id == rule_id).first()
+        if not rule:
+            return
+        rule.hit_count = (rule.hit_count or 0) + 1
+        rule.last_hit_at = datetime.utcnow()
+        db.commit()
+
+
+def rules_stats() -> dict:
+    with get_session() as db:
+        active_count = db.query(func.count(DynamicRule.id)).filter(DynamicRule.status == "active").scalar() or 0
+        pending_count = (
+            db.query(func.count(DynamicRule.id)).filter(DynamicRule.status == "pending_review").scalar() or 0
+        )
+        total_hits = (
+            db.query(func.coalesce(func.sum(DynamicRule.hit_count), 0))
+            .filter(DynamicRule.status == "active")
+            .scalar()
+            or 0
+        )
+        # Keep static count aligned with your static rule set if exposed
+        static_count = len(STATIC_RULES) if "STATIC_RULES" in globals() else 9
+        return {
+            "static": int(static_count),
+            "active": int(active_count),
+            "pending": int(pending_count),
+            "total_hits": int(total_hits),
+            "llm_calls_saved": int(total_hits),
+        }
