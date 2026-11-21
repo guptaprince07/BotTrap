@@ -293,3 +293,38 @@ def validate_suggested_regex(pattern, haystack, benign_samples):
     except TimeoutError:
         return False, "too slow"
     return True, "ok"
+from shared.db import list_dynamic_rules, record_rule_hit
+
+
+def load_active_rules() -> list[dict]:
+    """Load active rules with precompiled case-insensitive regexes."""
+    compiled_rules = []
+    for r in list_dynamic_rules(status="active"):
+        try:
+            r["rx"] = regex.compile(r["pattern"], regex.IGNORECASE)
+            compiled_rules.append(r)
+        except regex.error:
+            continue
+    return compiled_rules
+
+
+def match_dynamic(event, active_rules):
+    """active_rules: list of dicts with a compiled regex in r["rx"], reloaded every
+    DYNAMIC_RULES_REFRESH_SECONDS so an approved rule works without a restart."""
+    for r in active_rules:
+        try:
+            if r["rx"].search(pick_text(event, r["target"]), timeout=0.05):
+                record_rule_hit(r["id"])
+                return {
+                    "attack_type": r["attack_type"],
+                    "severity": r["severity"],
+                    "mitre_id": r["mitre_id"],
+                    "mitre_name": r["mitre_name"],
+                    "likely_tool": "unknown",
+                    "explanation": r["explanation"],
+                    "recommended_rule": r["recommended_rule"],
+                    "source": "dynamic",
+                }
+        except TimeoutError:
+            continue
+    return None
