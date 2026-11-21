@@ -2675,3 +2675,29 @@ export default function App() {
     </ErrorBoundary>
   );
 }
+import RulesPanel from "./components/RulesPanel";
+import { MOCK_ACTIVE_RULES, MOCK_PENDING_RULES, MOCK_RULES_STATS } from "./mockData";
+
+const USE_MOCK = import.meta.env.VITE_USE_MOCK === "true";
+
+// Inside App():
+// Poll /api/rules?status=pending_review, /api/rules?status=active, and /api/rules/stats
+// using your existing usePolling hook (or mock data when USE_MOCK is true).
+
+async function handleRuleAction(ruleId, action) {
+  if (USE_MOCK) return;
+  await api(`/api/rules/${ruleId}/${action}`, { method: "POST" });
+  refreshPendingRules();
+  refreshActiveRules();
+  refreshRulesStats();
+}
+
+// Render in layout:
+// <StatCards ... rulesStats={rulesStats} />
+// <RulesPanel
+//   pendingRules={pendingRules}
+//   activeRules={activeRules}
+//   loading={rulesLoading}
+//   error={rulesError}
+//   onAction={handleRuleAction}
+// />
