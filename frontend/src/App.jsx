@@ -264,6 +264,62 @@ const ATTACK_TEMPLATES = [
   },
 ];
 
+let eventCounter = 1000;
+
+function createEvent(offsetSeconds = 0, isNew = false, forcedTemplateIdx = null) {
+  eventCounter += 1;
+  const actor = THREAT_ACTORS[Math.floor(Math.random() * THREAT_ACTORS.length)];
+  const tpl =
+    forcedTemplateIdx !== null
+      ? ATTACK_TEMPLATES[forcedTemplateIdx % ATTACK_TEMPLATES.length]
+      : ATTACK_TEMPLATES[Math.floor(Math.random() * ATTACK_TEMPLATES.length)];
+  const ts = new Date(Date.now() - offsetSeconds * 1000);
+
+  const mitigation =
+    tpl.mitigationType === 'iptables'
+      ? `iptables -A INPUT -s ${actor.ip} -j DROP\n# Persist rule:\nip6tables-save > /etc/iptables/rules.v4`
+      : `# Nginx Edge Block (${tpl.ruleId})\nlocation ${tpl.targetPath} {\n    deny ${actor.ip};\n    return 444;\n}`;
+
+  return {
+    id: `EVT-${eventCounter}`,
+    timestamp: ts.toISOString(),
+    epoch: ts.getTime(),
+    ip: actor.ip,
+    country: actor.country,
+    countryCode: actor.code,
+    city: actor.city,
+    lat: actor.lat,
+    lon: actor.lon,
+    asn: actor.asn,
+    severity: tpl.severity,
+    attackType: tpl.attackType,
+    targetPath: tpl.targetPath,
+    method: tpl.method,
+    port: tpl.port,
+    mitreId: tpl.mitreId,
+    mitreName: tpl.mitreName,
+    mitreTactic: tpl.mitreTactic,
+    ruleId: tpl.ruleId,
+    payload: tpl.payload,
+    rawRequest: tpl.rawRequest(actor.ip, tpl.targetPath, tpl.payload),
+    aiSummary: tpl.aiSummary,
+    aiIntent: tpl.aiIntent,
+    confidence: tpl.confidence,
+    mitigation,
+    isNew,
+  };
+}
+
+function generateInitialDataset(count = 32) {
+  const list = [];
+  for (let i = 0; i < count; i++) {
+    // Spread events realistically across the last 28 minutes
+    const offset = Math.floor((i / count) * 1680) + Math.floor(Math.random() * 45);
+    list.push(createEvent(offset, false, i % ATTACK_TEMPLATES.length));
+  }
+  return list.sort((a, b) => b.epoch - a.epoch);
+}
+
 // ============================================================================
 // UTILITY FUNCTIONS
 // ============================================================================
