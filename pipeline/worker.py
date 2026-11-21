@@ -1,0 +1,1 @@
+"""Background pipeline worker skeleton."""
