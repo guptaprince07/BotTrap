@@ -1,0 +1,1 @@
+"""Attack simulator script skeleton."""
