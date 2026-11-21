@@ -1,13 +1,14 @@
 import json
 import os
 import secrets
+from contextlib import contextmanager
 from datetime import datetime, timezone, timedelta
 
 from sqlalchemy import create_engine, desc, func
 from sqlalchemy.orm import sessionmaker
 
 from shared.config import DATABASE_URL
-from shared.models import Base, Event, ClassificationCache, HoneyToken
+from shared.models import Base, Event, ClassificationCache, HoneyToken, DynamicRule
 
 
 # Database connection
@@ -23,6 +24,19 @@ SessionLocal = sessionmaker(
     autoflush=False,
     autocommit=False
 )
+
+
+@contextmanager
+def get_session():
+    """Context manager for database sessions with automatic rollback and closing."""
+    session = SessionLocal()
+    try:
+        yield session
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()
 
 
 # Convert database row into dictionary
@@ -422,10 +436,10 @@ def token_stats() -> dict:
             "last_used_at": _iso_utc(last_used),
         }
 
-from datetime import datetime
-from sqlalchemy import func
-from shared.models import DynamicRule
 
+# ============================================================================
+# Dynamic Rules Engine Storage & Telemetry
+# ============================================================================
 
 def _rule_to_dict(rule: DynamicRule) -> dict:
     return {
@@ -514,7 +528,14 @@ def rules_stats() -> dict:
             or 0
         )
         # Keep static count aligned with your static rule set if exposed
-        static_count = len(STATIC_RULES) if "STATIC_RULES" in globals() else 9
+        if "STATIC_RULES" in globals():
+            static_count = len(globals()["STATIC_RULES"])
+        else:
+            try:
+                from pipeline.rules import COMPILED_RULES
+                static_count = len(COMPILED_RULES)
+            except Exception:
+                static_count = 9
         return {
             "static": int(static_count),
             "active": int(active_count),
