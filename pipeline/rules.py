@@ -239,3 +239,57 @@ def classify_by_rules(event: dict) -> dict | None:
 
     # Unsure -> delegate to cache / LLM in worker.py
     return None
+from pathlib import Path
+import regex
+
+MAX_LEN = 200
+NESTED_QUANT = regex.compile(r"\((?:[^()]*[+*][^()]*)\)[+*{]")
+
+BENIGN_SAMPLES_PATH = Path(__file__).resolve().parent.parent / "tests" / "benign_samples.txt"
+
+
+def load_benign_samples(path: Path = BENIGN_SAMPLES_PATH) -> list[str]:
+    if not path.exists():
+        return []
+    return [line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def pick_text(event: dict, target: str) -> str:
+    if target == "path":
+        return event.get("path") or ""
+    if target == "query":
+        return event.get("query") or ""
+    if target == "body":
+        return event.get("body") or ""
+    if target == "user_agent":
+        return event.get("user_agent") or ""
+    return (
+        f'{event.get("method", "")} '
+        f'{event.get("path", "")}?{event.get("query", "")} '
+        f'{event.get("body", "")} '
+        f'{event.get("user_agent", "")}'
+    )
+
+
+def validate_suggested_regex(pattern, haystack, benign_samples):
+    """Return (ok, reason). haystack = the text of the attack that produced the regex."""
+    if not isinstance(pattern, str) or not pattern or len(pattern) > MAX_LEN:
+        return False, "empty or too long"
+    if NESTED_QUANT.search(pattern):
+        return False, "nested quantifier (ReDoS risk)"
+    try:
+        rx = regex.compile(pattern, regex.IGNORECASE)
+    except regex.error:
+        return False, "does not compile"
+    try:
+        if rx.search("", timeout=0.05):
+            return False, "matches empty string"
+        if not rx.search(haystack or "", timeout=0.05):
+            return False, "does not match the attack it came from"
+        for b in benign_samples:
+            if rx.search(b, timeout=0.05):
+                return False, "matches benign traffic"
+        rx.search("a" * 5000, timeout=0.05)
+    except TimeoutError:
+        return False, "too slow"
+    return True, "ok"
