@@ -248,3 +248,27 @@ def generate_report(events: list[dict]) -> str:
         return cleaned if cleaned else fallback_summary
     except Exception:
         return fallback_summary
+VALID_TARGETS = {"path", "query", "body", "user_agent", "any"}
+
+
+def _parse_rule_fields(raw_data: dict) -> tuple[str | None, str]:
+    if not isinstance(raw_data, dict):
+        return None, "any"
+
+    raw_regex = raw_data.get("suggested_regex")
+    suggested_regex = raw_regex.strip() if isinstance(raw_regex, str) and raw_regex.strip() else None
+
+    raw_target = raw_data.get("regex_target")
+    regex_target = raw_target.strip() if isinstance(raw_target, str) and raw_target.strip() in VALID_TARGETS else "any"
+
+    return suggested_regex, regex_target
+
+
+# Inside your existing classify(event) return dict:
+# suggested_regex, regex_target = _parse_rule_fields(parsed)
+# return {
+#     ...,
+#     "source": "llm",
+#     "suggested_regex": suggested_regex,
+#     "regex_target": regex_target,
+# }
