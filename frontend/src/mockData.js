@@ -57,3 +57,37 @@ export const MOCK_TOKEN_STATS = {
   avg_seconds_to_use: 87,
   last_used_at: twoMinutesAgo,
 };
+
+export const MOCK_PENDING_RULES = [
+  {
+    id: 101,
+    pattern: "\\$\\{jndi:(ldap|rmi|dns)",
+    target: "user_agent",
+    attack_type: "Command Injection",
+    severity: "Critical",
+    mitre_id: "T1190",
+    status: "pending_review",
+    hit_count: 0,
+  },
+];
+
+export const MOCK_ACTIVE_RULES = [
+  {
+    id: 102,
+    pattern: "\\.\\./\\.\\./etc/passwd",
+    target: "path",
+    attack_type: "Path Traversal",
+    severity: "High",
+    mitre_id: "T1083",
+    status: "active",
+    hit_count: 14,
+  },
+];
+
+export const MOCK_RULES_STATS = {
+  static: 9,
+  active: 1,
+  pending: 1,
+  total_hits: 14,
+  llm_calls_saved: 14,
+};
