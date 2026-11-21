@@ -389,7 +389,6 @@ function createEvent(offsetSeconds = 0, isNew = false, forcedTemplateIdx = null)
     lon: actor.lon,
     asn: actor.asn,
     severity: tpl.severity,
-    source: tpl.source || 'rules',
     attackType: tpl.attackType,
     targetPath: tpl.targetPath,
     method: tpl.method,
@@ -411,6 +410,7 @@ function createEvent(offsetSeconds = 0, isNew = false, forcedTemplateIdx = null)
 function generateInitialDataset(count = 32) {
   const list = [];
   for (let i = 0; i < count; i++) {
+    // Spread events realistically across the last 28 minutes
     const offset = Math.floor((i / count) * 1680) + Math.floor(Math.random() * 45);
     list.push(createEvent(offset, false, i % ATTACK_TEMPLATES.length));
   }
@@ -418,7 +418,7 @@ function generateInitialDataset(count = 32) {
 }
 
 // ============================================================================
-// UTILITY FUNCTIONS & POLLING HOOK
+// UTILITY FUNCTIONS
 // ============================================================================
 
 function formatTimeHMS(iso) {
