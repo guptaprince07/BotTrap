@@ -1,22 +1,46 @@
-version: '3.8'
-
+# Local run of everything:  cp .env.example .env && docker-compose up --build
 services:
-  # Honeypot service skeleton
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: honey
+      POSTGRES_PASSWORD: honey
+      POSTGRES_DB: honeylens
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U honey -d honeylens"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   honeypot:
     build:
       context: .
       dockerfile: docker/honeypot.Dockerfile
+    environment:
+      DATABASE_URL: postgresql://honey:honey@db:5432/honeylens
+      PORT: "5000"
     ports:
       - "5000:5000"
-    env_file:
-      - .env
+    depends_on:
+      db:
+        condition: service_healthy
 
-  # Dashboard API & pipeline worker service skeleton
   api:
     build:
       context: .
       dockerfile: docker/api.Dockerfile
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://honey:honey@db:5432/honeylens
+      PORT: "5001"
+      RUN_WORKER: "true"
     ports:
       - "5001:5001"
-    env_file:
-      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
