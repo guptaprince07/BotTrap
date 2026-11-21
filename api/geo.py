@@ -1,4 +1,4 @@
-"""IP geolocation lookup for HoneyLens.
+"""IP geolocation lookup for BotTrap.
 
 Order: memory cache -> built-in table (the simulator's demo IPs, works offline)
 -> ip-api.com (free, HTTP only, ~45 req/min). Private/local IPs have no location.

@@ -1,11 +1,11 @@
-HoneyLens: Pitch
+BotTrap: Pitch
 
 Theme: AI & Cybersecurity (threat detection, fraud prevention, secure systems)
 Team: Prince, Sejal, Neha, Vidanshi, Miljot
 
 One-line pitch
 
-HoneyLens is an AI-powered honeypot that attracts attackers, explains every attack in plain English, and hands you the firewall rule to block it, all on a free, live dashboard.
+BotTrap is an AI-powered honeypot that attracts attackers, explains every attack in plain English, and hands you the firewall rule to block it, all on a free, live dashboard.
 
 1. Problem
 Servers are scanned and attacked within minutes of going online.
@@ -45,4 +45,4 @@ A network of honeypots sharing threat intelligence.
 Attacker behaviour profiling across sessions.
 Closing line
 
-"Attackers are already probing every server. HoneyLens lets small teams watch them, understand them, and block them, for free."
+"Attackers are already probing every server. BotTrap lets small teams watch them, understand them, and block them, for free."

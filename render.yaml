@@ -1,0 +1,34 @@
+services:
+  - type: web
+    name: honeylens-honeypot
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn honeypot.app:app
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+
+  - type: web
+    name: honeylens-api
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn api.app:app --workers 1 --threads 4
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: RUN_WORKER
+        value: "true"
+      - key: ALLOWED_ORIGIN
+        value: "*"
+      - key: LLM_PROVIDER
+        sync: false
+      - key: LLM_API_KEY
+        sync: false
+      - key: LLM_MODEL
+        sync: false
+      - key: LLM_MAX_PER_MIN
+        value: "20"

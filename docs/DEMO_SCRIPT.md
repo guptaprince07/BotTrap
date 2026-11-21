@@ -1,4 +1,4 @@
-HoneyLens: 5-Minute Demo Script
+BotTrap: 5-Minute Demo Script
 
 Presenters: split the script across the team (suggested: Miljot opens/closes, Prince runs the attack, Neha explains the AI part).
 
@@ -10,7 +10,7 @@ Before you go on stage (T-10 min)
 [ ] Browser zoom so the world map and the feed are both visible.
 1. Problem (0:00 to 0:30)
 
-"Every server on the internet is attacked within minutes. Small colleges, clinics and shops have no security team, and raw logs are unreadable. We built HoneyLens: a trap that catches attackers and explains every attack in plain English."
+"Every server on the internet is attacked within minutes. Small colleges, clinics and shops have no security team, and raw logs are unreadable. We built BotTrap: a trap that catches attackers and explains every attack in plain English."
 
 2. Show the bait (0:30 to 1:00)
 

@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///honeylens.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///bottrap.db")
 
 API_PORT = int(os.getenv("PORT", os.getenv("API_PORT", 5001)))
 
