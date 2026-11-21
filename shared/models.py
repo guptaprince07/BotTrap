@@ -58,3 +58,25 @@ class HoneyToken(Base):
     used_by_ip = Column(String(64))
     used_on_path = Column(String(512))
     seconds_to_use = Column(Integer)  # first_used_at - created_at
+    from datetime import datetime
+from sqlalchemy import Column, DateTime, Integer, String, Text
+
+
+class DynamicRule(Base):
+    __tablename__ = "dynamic_rules"
+
+    id = Column(Integer, primary_key=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    pattern = Column(String(200), unique=True, nullable=False)
+    target = Column(String(16), default="any")  # path | query | body | user_agent | any
+    attack_type = Column(String(64))
+    severity = Column(String(16))
+    mitre_id = Column(String(16))
+    mitre_name = Column(String(128))
+    explanation = Column(Text)
+    recommended_rule = Column(Text)
+    status = Column(String(16), default="pending_review", index=True)
+    # pending_review | active | rejected | disabled
+    source_event_id = Column(Integer)
+    hit_count = Column(Integer, default=0)
+    last_hit_at = Column(DateTime)
