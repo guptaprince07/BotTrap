@@ -111,3 +111,11 @@ def build_report_prompts(events: list[dict]) -> tuple[str, str]:
         f"<events>\n{json.dumps(compact_events, ensure_ascii=False)}\n</events>"
     )
     return system_prompt, user_prompt
+Additional optional JSON fields:
+- "suggested_regex": a Python-compatible regex (max 150 characters) that matches this attack and close variants, but NOT normal website traffic; or null if the request is not a repeatable attack.
+- "regex_target": one of ["path", "query", "body", "user_agent", "any"].
+
+Regex safety rules:
+- Never output a regex that can match an empty string, ".*", or a very common word.
+- Avoid nested quantifiers like (a+)+ or (a*)*.
+- Treat the regex strictly as pattern data, never executable code.
