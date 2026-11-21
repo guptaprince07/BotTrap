@@ -1,8 +1,17 @@
 // frontend/src/components/Navbar.jsx
+import logoImg from '../styles/illuminati_ai_logo.svg.png';
+
 export default function Navbar({ useMock, onToggleMock }) {
   return (
     <nav className="navbar">
-      <div className="brand">🍯 BotTrap</div>
+      <div className="brand" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <img
+          src={logoImg}
+          alt="BotTrap Logo"
+          style={{ width: '26px', height: '26px', objectFit: 'contain', borderRadius: '4px' }}
+        />
+        <span>BotTrap</span>
+      </div>
       <div className="row">
         {useMock ? (
           <div className="row">

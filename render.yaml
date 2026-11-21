@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: honeylens-honeypot
+    name: bottrap-honeypot
     env: python
     plan: free
     buildCommand: pip install -r requirements.txt
@@ -11,7 +11,7 @@ services:
         sync: false
 
   - type: web
-    name: honeylens-api
+    name: bottrap-api
     env: python
     plan: free
     buildCommand: pip install -r requirements.txt
